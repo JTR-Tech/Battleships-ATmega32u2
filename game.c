@@ -1,7 +1,6 @@
 #include "../fonts/font5x7_1.h"
 #include "led.h"
-#include "navswitch.h"
-#include "pacer.h"
+#include "navswitch.h" #include "pacer.h"
 #include "pio.h"
 #include "system.h"
 #include "tinygl.h"
@@ -9,10 +8,6 @@
 /* Define polling rate in Hz.  */
 #define LOOP_RATE 300
 #define LED_RATE 1
-
-#define TINY_GL_SPEED 150
-// Constant for tinygl text speed
-#define MESSAGE_RATE 1
 // Constants for map and display size
 #define MAP_WIDTH 15
 #define MAP_HEIGHT 11
@@ -120,13 +115,6 @@ void updateMap(map_t* map)
     }
 }
 
-void playerInit(map_t* map)
-{
-    map->player.position.x = 4; // players initial position
-    map->player.position.y = 6; //
-    map->player.position.direction = NORTH;
-}
-
 void movePlayer(map_t* map)
 {
     // TODO: finish implementing safezone movement
@@ -197,82 +185,51 @@ void movePlayer(map_t* map)
     }
 }
 
-void chooseShip()
+int main(void)
 {
-    tinygl_text("Please choose your ship positions");
-}
+    // TODO: cleanup
+    int tick = 0;
+    int ledStatus;
+    int introtick = 0;
+    int state = 1;
+    map_t map;
+    map.player.position.x = 4; // players initial position
+    map.player.position.y = 6; //
+    map.player.position.direction = NORTH;
 
-void initialize(map_t* map)
-{
-    // Third party module init
+    led_set(LED1, 0);
+    ledStatus = 0;
+
+    // library init
     system_init();
     navswitch_init();
     led_init();
-    pacer_init(LOOP_RATE);
-    tinygl_init(TINY_GL_SPEED);
+    tinygl_init(LOOP_RATE);
 
-    playerInit(&map);
+    pacer_init(LOOP_RATE);
 
     tinygl_font_set(&font5x7_1);
     tinygl_text_speed_set(10);
     tinygl_text_mode_set(TINYGL_TEXT_MODE_SCROLL);
-    tinygl_text("Place Your Ships");
-
-    led_set(LED1, 0);
-}
-
-void ledFlashing(uint16_t* timerTick, uint8_t* ledStatus)
-{
-    if (*timerTick >= LOOP_RATE) {
-        if (*ledStatus == 1) {
-            led_set(LED1, 0);
-            *ledStatus = 0;
-        } else {
-            led_set(LED1, 1);
-            *ledStatus = 1;
-        }
-
-        *timerTick = 0;
-    }
-    *timerTick += 1;
-}
-
-int main(void)
-{
-    map_t map;
-    initialize(&map);
-
-    uint8_t programState = 1;
-    uint8_t ledStatus = 0;
-    uint16_t timerTick = 0;
-    uint16_t introTick = 0;
-    /*
-     */
+    tinygl_text("PLACE YOUR SHIPS");
 
     /* Paced loop.  */
     while (1) {
         pacer_wait();
-        tinygl_update();
         navswitch_update();
-
-        if (programState == 1) {
-            if (introTick >= LOOP_RATE * 9.5) {
-                tinygl_clear();
-                updateDisplayArea(&map);
-                drawPlayer(&map);
-                tinygl_update();
-                programState += 2;
-            }
-
-            introTick += 1;
-        } else if (programState == 2) {
-            // State where player selects where their ships go
-        } else if (programState == 3) {
-            // State where player selects opponents ground
-            movePlayer(&map);
-        }
-
+        tinygl_update();
         // Keeps blue led cycling at 1 second intervals, useful for debugging.
-        ledFlashing(&timerTick, &ledStatus);
+        if (state == 1) {
+            introtick++;
+            if (introtick >= 300 * 9.5) {
+                // updateDisplayArea(&map);
+                // drawPlayer(&map);
+                state = 2;
+                tinygl_clear();
+            }
+        } else {
+            movePlayer(&map);
+            tinygl_update();
+        }
     }
 }
