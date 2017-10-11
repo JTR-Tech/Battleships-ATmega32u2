@@ -1,6 +1,7 @@
 #include "../fonts/font5x7_1.h"
 #include "led.h"
-#include "navswitch.h" #include "pacer.h"
+#include "navswitch.h"
+#include "pacer.h"
 #include "pio.h"
 #include "system.h"
 #include "tinygl.h"
@@ -115,17 +116,16 @@ void updateMap(map_t* map)
     }
 }
 
-void movePlayer(map_t* map)
+void movePlayer(map_t *map)
 {
-    // TODO: finish implementing safezone movement
-    // This function moves the player in the direction of the navswtich, really
-    // we're manipulating the "camera",  unless the players movement would move
-    // the camera outside the map area, in which case, set the "safezone"
-    // causing the player to move, instead of the camera
+    //TODO: finish implementing safezone movement
+    //This function moves the player in the direction of the navswtich, really we're manipulating the "camera",
+    //unless the players movement would move the camera outside the map area, in which case, set the "safezone"
+    //causing the player to move, instead of the camera
 
     updateDisplayArea(map);
 
-    if (navswitch_push_event_p(NAVSWITCH_WEST) && map->player.position.y > 0) {
+    if (navswitch_push_event_p (NAVSWITCH_WEST) && map->player.position.y > 0) {
         map->player.position.y--;
         map->player.position.direction = WEST;
 
@@ -134,14 +134,12 @@ void movePlayer(map_t* map)
         } else {
             map->player.safezone.position.y = 0;
         }
-        // Make sure to call "drawPlayer" after "updateMap", else the player
-        // sprite is clobbered with map state
+        //Make sure to call "drawPlayer" after "updateMap", else the player sprite is clobbered with map state
         updateMap(map);
         drawPlayer(map);
     }
 
-    if (navswitch_push_event_p(NAVSWITCH_EAST) &&
-        map->player.position.y < MAP_WIDTH - 1) {
+    if (navswitch_push_event_p (NAVSWITCH_EAST) && map->player.position.y < MAP_WIDTH - 1) {
         map->player.position.y++;
         map->player.position.direction = EAST;
 
@@ -155,7 +153,7 @@ void movePlayer(map_t* map)
         drawPlayer(map);
     }
 
-    if (navswitch_push_event_p(NAVSWITCH_NORTH) && map->player.position.x > 0) {
+    if (navswitch_push_event_p (NAVSWITCH_NORTH) && map->player.position.x > 0) {
         map->player.position.x--;
         map->player.position.direction = NORTH;
 
@@ -169,8 +167,7 @@ void movePlayer(map_t* map)
         drawPlayer(map);
     }
 
-    if (navswitch_push_event_p(NAVSWITCH_SOUTH) &&
-        map->player.position.x < MAP_HEIGHT - 1) {
+    if (navswitch_push_event_p (NAVSWITCH_SOUTH) && map->player.position.x < MAP_HEIGHT - 1) {
         map->player.position.x++;
         map->player.position.direction = SOUTH;
 
@@ -183,6 +180,16 @@ void movePlayer(map_t* map)
         updateMap(map);
         drawPlayer(map);
     }
+
+}
+
+void *mapInit() {
+    // create the map outside the main() scope as to not interfer with tinygl's text. Returns a pointer
+    map_t *map;
+    map->player.position.x = 4; // players initial position
+    map->player.position.y = 6; //
+    map->player.position.direction = NORTH;
+    return map;
 }
 
 int main(void)
@@ -192,44 +199,58 @@ int main(void)
     int ledStatus;
     int introtick = 0;
     int state = 1;
-    map_t map;
-    map.player.position.x = 4; // players initial position
-    map.player.position.y = 6; //
-    map.player.position.direction = NORTH;
-
-    led_set(LED1, 0);
-    ledStatus = 0;
 
     // library init
     system_init();
     navswitch_init();
     led_init();
     tinygl_init(LOOP_RATE);
-
     pacer_init(LOOP_RATE);
 
     tinygl_font_set(&font5x7_1);
-    tinygl_text_speed_set(10);
+    tinygl_text_speed_set(20);
     tinygl_text_mode_set(TINYGL_TEXT_MODE_SCROLL);
-    tinygl_text("PLACE YOUR SHIPS");
+    tinygl_text("PLACE YOUR SHIPS "); //needs to be null-terminated
+
+    led_set(LED1, 0);
+    ledStatus = 0;
 
     /* Paced loop.  */
     while (1) {
         pacer_wait();
         navswitch_update();
-        tinygl_update();
-        // Keeps blue led cycling at 1 second intervals, useful for debugging.
-        if (state == 1) {
+
+        // Our pacer is set to 300HZ, so the "tick" variable will increase from 0 - 300 in exactly one second
+        // The "introtick" variable denotes the amount of seconds the message has displayed.
+        // Once "introtick" reaches 10(seconds), progess the "state"
+        if (tick >= LOOP_RATE) {
+            if (ledStatus == 1) { // re-added the led cycle to debug segfaults, helpful to know if we have reached this
+                ledStatus = 0;    // point and are still processing
+            } else {
+                led_set(LED1, 1);
+                ledStatus = 1;
+            }
+
             introtick++;
-            if (introtick >= 300 * 9.5) {
-                // updateDisplayArea(&map);
-                // drawPlayer(&map);
+            if (introtick == 10 && state == 1) {
                 state = 2;
                 tinygl_clear();
             }
-        } else {
-            //            movePlayer(&map);
-            //           tinygl_update();
+            tick = 0;
         }
+
+        if (state == 2) {
+            // I think the problem was, mapInit() calls tinygl functions using variables decleared within the the
+            // same context as the "tinygl_text", when theyre initalized, they conflict and the program doesnt run.
+            // Trying to get around this, ive initialize "map" in a separate function and returned a pointer to keep it
+            // out of the main() scope. Not quite working yet, but at least it doesnt blow up :)
+
+            map_t *map = mapInit();
+            movePlayer(&map);
+        }
+
+        tinygl_update ();
+        tick = tick + 1;
+
     }
 }
