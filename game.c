@@ -228,8 +228,8 @@ int main(void)
                 tinygl_clear();
             }
         } else {
-            movePlayer(&map);
-            tinygl_update();
+            //            movePlayer(&map);
+            //           tinygl_update();
         }
     }
 }
