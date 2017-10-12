@@ -205,7 +205,7 @@ int main(void)
     system_init();
     navswitch_init();
     led_init();
-    tinygl_init(LOOP_RATE);
+    tinygl_init(150);
 
     pacer_init(LOOP_RATE);
 
@@ -215,22 +215,28 @@ int main(void)
     tinygl_text("PLACE YOUR SHIPS");
 
     /* Paced loop.  */
+
+    while (introtick < LOOP_RATE * 9.5) {
+        pacer_wait();
+        introtick++;
+        tinygl_update();
+    }
+
+    tinygl_clear();
+
+    // Uncomment this
+    /*
+
+    updateDisplayArea(&map);
+       drawPlayer(&map);
+
     while (1) {
         pacer_wait();
         navswitch_update();
         tinygl_update();
         // Keeps blue led cycling at 1 second intervals, useful for debugging.
-        if (state == 1) {
-            introtick++;
-            if (introtick >= 300 * 9.5) {
-                // updateDisplayArea(&map);
-                // drawPlayer(&map);
-                state = 2;
-                tinygl_clear();
-            }
-        } else {
-            // movePlayer(&map);
-            // tinygl_update();
-        }
+        movePlayer(&map);
     }
+
+    */
 }
