@@ -6,6 +6,7 @@
 #include "pio.h"
 #include "system.h"
 #include "tinygl.h"
+#include "ir_uart.h"
 
 /* Define polling rate in Hz.  */
 #define LOOP_RATE 300
@@ -242,13 +243,21 @@ void* mapInit()
 
 int main(void)
 {
-    // TODO: cleanup
+    ir_uart_init();
+    /*
+    bool currentTurn = connectUsers();
+    srand(time(NULL));
+    */
+
+    int num = connectUsers();
+    
+/*
+       
     int tick = 0;
     int ledStatus;
     int introtick = 0;
     int state = 1;
 
-    // library init
     system_init();
     navswitch_init();
     led_init();
@@ -263,7 +272,6 @@ int main(void)
     led_set(LED1, 0);
     ledStatus = 0;
 
-    /* Paced loop.  */
     while (1) {
         pacer_wait();
         navswitch_update();
@@ -305,4 +313,10 @@ int main(void)
         tinygl_update();
         tick = tick + 1;
     }
+
+    */
+
+    
+
+    
 }
