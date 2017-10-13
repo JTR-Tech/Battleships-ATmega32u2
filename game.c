@@ -1,4 +1,5 @@
 #include "../fonts/font5x7_1.h"
+#include "ir_uart.h"
 #include "ircommunication.h"
 #include "led.h"
 #include "navswitch.h"
@@ -6,7 +7,6 @@
 #include "pio.h"
 #include "system.h"
 #include "tinygl.h"
-#include "ir_uart.h"
 
 /* Define polling rate in Hz.  */
 #define LOOP_RATE 300
@@ -35,7 +35,7 @@ const int layout[MAP_HEIGHT][MAP_WIDTH] = {
     // EAST
 };
 
-//1 Marks a border, 0 marks unmarked territory, "h" marks hit, "m" marks miss
+// 1 Marks a border, 0 marks unmarked territory, "h" marks hit, "m" marks miss
 const int yourLayout[MAP_HEIGHT][MAP_WIDTH] = {
     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
     {1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1},
@@ -51,7 +51,7 @@ const int yourLayout[MAP_HEIGHT][MAP_WIDTH] = {
     // EAST
 };
 
-//1 Marks a border, 0 marks unmarked territory, "h" marks hit, "m" marks miss
+// 1 Marks a border, 0 marks unmarked territory, "h" marks hit, "m" marks miss
 const int opponentsLayout[MAP_HEIGHT][MAP_WIDTH] = {
     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
     {1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1},
@@ -66,16 +66,6 @@ const int opponentsLayout[MAP_HEIGHT][MAP_WIDTH] = {
     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
     // EAST
 };
-
-
-
-
-
-
-
-
-
-
 
 typedef enum { NORTH, EAST, SOUTH, WEST } direction_t;
 
@@ -165,8 +155,8 @@ void movePlayer(map_t* map)
     // TODO: finish implementing safezone movement
     // This function moves the player in the direction of the navswtich, really
     // we're manipulating the "camera",  unless the players movement would move
-    // the camera outside the map area, in which case, set the "safezone"  causing
-    // the player to move, instead of the camera
+    // the camera outside the map area, in which case, set the "safezone"
+    // causing the player to move, instead of the camera
 
     updateDisplayArea(map);
 
@@ -243,80 +233,141 @@ void* mapInit()
 
 int main(void)
 {
+    system_init();
+    led_init();
+    navswitch_init();
     ir_uart_init();
+    pacer_init(LOOP_RATE);
+
+
+    tinygl_init(LOOP_RATE);
+    tinygl_font_set(&font5x7_1);
+    tinygl_text_speed_set(20);
+    tinygl_text_mode_set(TINYGL_TEXT_MODE_SCROLL);
+
+
+    led_set(LED1, 0);
+
+
+    uint8_t isYourTurn = waitForBothPlayers();
+    
+    led_set(LED1, 1);
+
+    if (isYourTurn == 1) {
+        //Do init stuff for loading empty background
+        tinygl_point_t p = {1, 1};
+        tinygl_draw_point(p, 1);
+    } else {
+        //display tinygl text
+        tinygl_point_t p = {2, 2};
+        tinygl_draw_point(p, 1);
+        
+    }
+    
+    //Emulates a battleships game without grahpics (push command for end of round)
+    while (1) {
+        pacer_wait();
+        tinygl_update();
+        navswitch_update();
+
+        if (isYourTurn == 1) {
+            if (navswitch_push_event_p(NAVSWITCH_PUSH)) {
+              userDoneWithRound();  
+              tinygl_clear();
+              tinygl_point_t p = {2, 2};
+              tinygl_draw_point(p, 1);
+              isYourTurn = 0;
+            }
+        }
+        else {
+            if (isUserDoneWithRound()) {
+                tinygl_clear(); 
+                isYourTurn = 1;
+                tinygl_point_t p = {1, 1};
+                tinygl_draw_point(p, 1);
+            }
+        }
+   }
+
+        
+
     /*
     bool currentTurn = connectUsers();
     srand(time(NULL));
     */
+    /*
+        int num = connectUsers();
 
-    int num = connectUsers();
-    
-/*
-       
-    int tick = 0;
-    int ledStatus;
-    int introtick = 0;
-    int state = 1;
-
-    system_init();
-    navswitch_init();
-    led_init();
-    tinygl_init(LOOP_RATE);
-    pacer_init(LOOP_RATE);
-
-    tinygl_font_set(&font5x7_1);
-    tinygl_text_speed_set(20);
-    tinygl_text_mode_set(TINYGL_TEXT_MODE_SCROLL);
-    tinygl_text("PLACE YOUR SHIPS "); // needs to be null-terminated
-
-    led_set(LED1, 0);
-    ledStatus = 0;
-
-    while (1) {
-        pacer_wait();
-        navswitch_update();
-
-        // Our pacer is set to 300HZ, so the "tick" variable will increase from
-        // 0 - 300 in exactly one second The "introtick" variable denotes the
-        // amount of seconds the message has displayed. Once "introtick" reaches
-        // 10(seconds), progess the "state"
-        if (tick >= LOOP_RATE) {
-            if (ledStatus == 1) { // re-added the led cycle to debug segfaults,
-                                  // helpful to know if we have reached this
-                ledStatus = 0;    // point and are still processing
-            } else {
-                led_set(LED1, 1);
-                ledStatus = 1;
-            }
-
-            introtick++;
-            if (introtick == 10 && state == 1) {
-                state = 2;
-                tinygl_clear();
-            }
-            tick = 0;
+        while (1) {
+            pacer_wait();
+            led_set(LED1, 1);
         }
 
-        if (state == 2) {
-            // I think the problem was, mapInit() calls tinygl functions using
-            // variables decleared within the the same context as the
-            // "tinygl_text", when theyre initalized, they conflict and the
-            // program doesnt run. Trying to get around this, ive initialize
-            // "map" in a separate function and returned a pointer to keep it
-            // out of the main() scope. Not quite working yet, but at least it
-            // doesnt blow up :)
 
-            map_t* map = mapInit();
-            movePlayer(&map);
+
+    /*
+
+        int tick = 0;
+        int ledStatus;
+        int introtick = 0;
+        int state = 1;
+
+        system_init();
+        navswitch_init();
+        led_init();
+        pacer_init(LOOP_RATE);
+
+        led_set(LED1, 0);
+        ledStatus = 0;
+
+        while (1) {
+            pacer_wait();
+            navswitch_update();
+
+            // Our pacer is set to 300HZ, so the "tick" variable will increase
+    from
+            // 0 - 300 in exactly one second The "introtick" variable denotes
+    the
+            // amount of seconds the message has displayed. Once "introtick"
+    reaches
+            // 10(seconds), progess the "state"
+            if (tick >= LOOP_RATE) {
+                if (ledStatus == 1) { // re-added the led cycle to debug
+    segfaults,
+                                      // helpful to know if we have reached this
+                    ledStatus = 0;    // point and are still processing
+                } else {
+                    led_set(LED1, 1);
+                    ledStatus = 1;
+                }
+
+                introtick++;
+                if (introtick == 10 && state == 1) {
+                    state = 2;
+                    tinygl_clear();
+                }
+                tick = 0;
+            }
+
+            if (state == 2) {
+                // I think the problem was, mapInit() calls tinygl functions
+    using
+                // variables decleared within the the same context as the
+                // "tinygl_text", when theyre initalized, they conflict and the
+                // program doesnt run. Trying to get around this, ive initialize
+                // "map" in a separate function and returned a pointer to keep
+    it
+                // out of the main() scope. Not quite working yet, but at least
+    it
+                // doesnt blow up :)
+
+                map_t* map = mapInit();
+                movePlayer(&map);
+            }
+
+            tinygl_update();
+            tick = tick + 1;
         }
 
-        tinygl_update();
-        tick = tick + 1;
-    }
-
-    */
-
-    
-
-    
+        */
 }

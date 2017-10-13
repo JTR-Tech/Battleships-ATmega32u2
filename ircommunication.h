@@ -6,6 +6,15 @@
 /* Will attempt to hit the opponents boats
    If boat was hit, then tinygl point will be returned
    If not, NULL will be returned*/
-tinygl_point_t attemptShot(uint8_t x, uint8_t y);
+
+uint8_t waitForBothPlayers(void);
+
+// This will be called when a user is done with their round
+void userDoneWithRound(void);
+
+// This will be called to check if the user is done with their round
+bool isUserDoneWithRound(void);
+
+bool sendBomb();
 
 #endif
