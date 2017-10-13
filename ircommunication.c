@@ -3,45 +3,56 @@
 #include "navswitch.h"
 #include "pacer.h"
 #include "system.h"
-#include <stdbool.h>
 
+// Characters that will be sent with ir_uart_putc()
 #define USER_IS_READY 'r'
 #define DONE_WITH_ROUND 'd'
+#define USER_HIT 'h'
 
-uint8_t waitForBothPlayers(void)
+/* Will block until both players have pressed the NAVSWITCH_PUSH button.
+   Will return true if user pressed first otherwise it will return false*/
+bool waitForBothPlayers(void)
 {
 
-    uint8_t userReady = 0;
-    uint8_t opponentReady = 0;
-    uint8_t goesFirst;
+    bool userReady = false;
+    bool opponentReady = false;
+    bool goesFirst;
 
     while (1) {
         pacer_wait();
         navswitch_update();
         // If button is pushed, then player is ready
         if (navswitch_push_event_p(NAVSWITCH_PUSH)) {
-            userReady = 1;
+            userReady = false;
 
-            if (opponentReady == 0) {
-                goesFirst = 1;
+            // If opponent has not pressed, then user will go first
+            if (opponentReady == false) {
+                goesFirst = true;
             } else {
-                goesFirst = 0;
+                goesFirst = false;
             }
+
+            // Send messsage to opponent telling them that you have pressed the
+            // button
             ir_uart_putc(USER_IS_READY);
         }
 
         // If messaged recieved, then opponent is ready
         if (ir_uart_read_ready_p()) {
+            // Making sure that the write message was sent
             if (ir_uart_getc() == USER_IS_READY) {
-                if (userReady == 1) {
-                    goesFirst = 1;
+                opponentReady = true;
+
+                // If user pressed button first, then user will go first
+                if (userReady == true) {
+                    goesFirst = true;
                 } else {
-                    goesFirst = 0;
+                    goesFirst = false;
                 }
-                opponentReady = 1;
             }
         }
 
+        // If both users are ready then return who pressed first
         if (userReady && opponentReady) {
             return goesFirst;
         }
@@ -49,11 +60,18 @@ uint8_t waitForBothPlayers(void)
     return 1;
 }
 
+/* Call this after user has finished their round.
+   Will notify the opponent that their turn has finished
+*/
 void userDoneWithRound(void)
 {
     ir_uart_putc(DONE_WITH_ROUND);
 }
 
+/*
+    Checks to see if the user has finished with their round
+    Call this function while user is currently waiting for their round
+*/
 bool isUserDoneWithRound(void)
 {
     if (ir_uart_read_ready_p()) {
@@ -65,9 +83,22 @@ bool isUserDoneWithRound(void)
     return false;
 }
 
-bool sendBomb(uint8_t x, uint8_t y)
+/*
+
+*/
+bool sendMissile(uint8_t x, uint8_t y)
 {
 
-    char[5];
-    ir_uart_puts(sprint);
+    char[5] coordinates;
+    sprintf(coordinates, "%d%d", xy);
+    ir_uart_puts(coordinates);
+
+    while (1) {
+        if (ir_uart_read_ready_p()) {
+            if (ir_uart_getc() == USER_HIT) {
+
+            } else {
+            }
+        }
+    }
 }
