@@ -18,22 +18,42 @@
 // below is a simple "map", 1's indicating LED(on), 0's indicating LED(off). If
 // the MAP_WIDTH and MAP_HEIGHT values  are changed, the layout array must be
 // updated
-const int layout[MAP_HEIGHT][MAP_WIDTH] = {
+int layout[MAP_HEIGHT][MAP_WIDTH] = {
     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    {1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1},
-    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, // NORTH
-    {1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, // NORTH
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
     // EAST
 };
+typedef enum { NORTH=1, SOUTH=2, EAST=3, WEST=4 } direction_t;
 
-typedef enum { NORTH, EAST, SOUTH, WEST } direction_t;
+//defining ship size
+const int largeShip[2][5] = {
+        {2, 2, 2, 2, 2},
+        {2, 2, 2, 2, 2}
+};
+
+const int mediumShip[1][4] = {
+        {2, 2, 2, 2}
+};
+
+const int smallShip[1][2] = {
+        {2, 2}
+};
+
+struct navy {
+    int noOfLargeShips;
+    int noOfMediumShips;
+    int noOfSmallShips;
+};
+typedef  struct navy navy_t;
 
 struct position {
     int x;
@@ -50,9 +70,12 @@ struct safezone // When the player position is at "x3 - x11 or y2 - y8", dont
 typedef struct safezone safezone_t;
 
 struct player {
+    int **sprite;
+    int spriteRotation;
     position_t position;
     position_t spritePosition;
     safezone_t safezone;
+    navy_t units;
 };
 typedef struct player player_t;
 
@@ -60,6 +83,7 @@ typedef struct player player_t;
 struct map {
     // heres where the display frame is stored
     int displayArea[RENDER_HEIGHT][RENDER_WIDTH];
+    int **spriteArea;
     player_t player;
 };
 typedef struct map map_t;
@@ -89,19 +113,33 @@ void drawPlayer(map_t* map)
 {
     // This function is tasked with rendering player, usually center of the
     // screen. Unless safezone is set, then we  move the player in direction the
-    // camera otherwise would have.  if (map->player.safezone.position.x ||
-    // map->player.safezone.position.y) {
-    // tinygl_pixel_set({map->player.position.x, map->player.position.y}, 0);
-    // TODO: finish implementing safezone movement
-    // if (map->player.position.direction == WEST) {
+    // camera otherwise would have.
 
-    //}
-    //}
-    // TODO: create a proper sprite
-    int k = 3;
-    int i = 2;
-    tinygl_point_t pos = {i, k};
-    tinygl_pixel_set(pos, 1);
+    if (map->player.safezone.position.x || map->player.safezone.position.y) {
+        //TODO: curser not travelling in proper direction
+        tinygl_point_t pos = {map->player.position.x, map->player.position.y};
+        tinygl_pixel_set(pos, 1);
+    } else {
+        //"else if we're not in the save zone, just draw the curser in the center"
+        int k = 3;
+        int i = 2;
+        tinygl_point_t pos = {i, k};
+        tinygl_pixel_set(pos, 1);
+    }
+    // After we have drawn the simple curser, then we add the sprite "around" it, so its position is such that
+    // the curser is centered
+    // TODO: render sprite
+    int spriteHeight = sizeof map->player.sprite[0];
+    int spriteWidth = sizeof map->player.sprite[0][0];
+    int start_pos_x = map->player.position.x - 3;
+    int start_pos_y = map->player.position.y;
+
+    for (int i = 0; i < spriteHeight && start_pos_x + i < spriteHeight; i++) {
+        for (int k = 0; k < spriteWidth && start_pos_y + k < spriteWidth; k++) {
+
+            map->spriteArea[i][k] = layout[start_pos_x + i][start_pos_y + k];
+        }
+    }
 }
 
 void updateMap(map_t* map)
@@ -116,8 +154,7 @@ void updateMap(map_t* map)
     }
 }
 
-void movePlayer(map_t *map)
-{
+void movePlayer(map_t *map) {
     //TODO: finish implementing safezone movement
     //This function moves the player in the direction of the navswtich, really we're manipulating the "camera",
     //unless the players movement would move the camera outside the map area, in which case, set the "safezone"
@@ -125,132 +162,148 @@ void movePlayer(map_t *map)
 
     updateDisplayArea(map);
 
-    if (navswitch_push_event_p (NAVSWITCH_WEST) && map->player.position.y > 0) {
+    if (navswitch_push_event_p(NAVSWITCH_WEST) && map->player.position.y > 0) {
         map->player.position.y--;
         map->player.position.direction = WEST;
 
-        if (map->player.position.y <= 2 || map->player.position.y <= 8) {
+        if (map->player.position.y <= 2 || map->player.position.y >= 8) {
             map->player.safezone.position.y = 1;
+            led_set(LED1, 1);
+
+            updateMap(map);
+            drawPlayer(map);
+
         } else {
             map->player.safezone.position.y = 0;
+            led_set(LED1, 0);
+
+            updateMap(map);
+            drawPlayer(map);
         }
-        //Make sure to call "drawPlayer" after "updateMap", else the player sprite is clobbered with map state
-        updateMap(map);
-        drawPlayer(map);
     }
 
-    if (navswitch_push_event_p (NAVSWITCH_EAST) && map->player.position.y < MAP_WIDTH - 1) {
+    if (navswitch_push_event_p(NAVSWITCH_EAST) && map->player.position.y < MAP_WIDTH - 1) {
         map->player.position.y++;
         map->player.position.direction = EAST;
 
-        if (map->player.position.y <= 2 || map->player.position.y <= 8) {
+        if (map->player.position.y <= 2 || map->player.position.y >= 8) {
             map->player.safezone.position.y = 1;
+            led_set(LED1, 1);
+
+            updateMap(map);
+            drawPlayer(map);
         } else {
             map->player.safezone.position.y = 0;
-        }
+            led_set(LED1, 0);
 
-        updateMap(map);
-        drawPlayer(map);
+            updateMap(map);
+            drawPlayer(map);
+        }
     }
 
-    if (navswitch_push_event_p (NAVSWITCH_NORTH) && map->player.position.x > 0) {
+    if (navswitch_push_event_p(NAVSWITCH_NORTH) && map->player.position.x > 0) {
         map->player.position.x--;
         map->player.position.direction = NORTH;
 
-        if (map->player.position.x <= 3 || map->player.position.x <= 11) {
-            map->player.safezone.position.x = 1;
-        } else {
-            map->player.safezone.position.x = 0;
-        }
+        if (map->player.position.x <= 3 || map->player.position.x >= 11) {
+            map->player.safezone.position.y = 1;
+            led_set(LED1, 1);
 
-        updateMap(map);
-        drawPlayer(map);
+            updateMap(map);
+            drawPlayer(map);
+        } else {
+            map->player.safezone.position.y = 0;
+            led_set(LED1, 0);
+
+            updateMap(map);
+            drawPlayer(map);
+        }
     }
 
-    if (navswitch_push_event_p (NAVSWITCH_SOUTH) && map->player.position.x < MAP_HEIGHT - 1) {
+    if (navswitch_push_event_p(NAVSWITCH_SOUTH) && map->player.position.x < MAP_HEIGHT - 1) {
         map->player.position.x++;
         map->player.position.direction = SOUTH;
 
-        if (map->player.position.x <= 3 || map->player.position.x <= 11) {
-            map->player.safezone.position.x = 1;
-        } else {
-            map->player.safezone.position.x = 0;
-        }
+        if (map->player.position.x <= 3 || map->player.position.x >= 11) {
+            map->player.safezone.position.y = 1;
+            led_set(LED1, 1);
 
-        updateMap(map);
-        drawPlayer(map);
+            updateMap(map);
+            drawPlayer(map);
+        } else {
+            map->player.safezone.position.y = 0;
+            led_set(LED1, 0);
+
+            updateMap(map);
+            drawPlayer(map);
+        }
+    }
+}
+
+int shipSelection(map_t *map) {
+    //move down the conditionals until all units are placed
+    if (map->player.units.noOfLargeShips > 0) {
+        map->player.units.noOfLargeShips - 1;
+        return &largeShip;
     }
 
+    else if (map->player.units.noOfMediumShips > 0) {
+        map->player.units.noOfMediumShips - 1;
+        return &mediumShip;
+    }
+
+    else {
+        map->player.units.noOfSmallShips - 1;
+        return &smallShip;
+    }
 }
 
-void *mapInit() {
-    // create the map outside the main() scope as to not interfer with tinygl's text. Returns a pointer
-    map_t *map;
-    map->player.position.x = 4; // players initial position
-    map->player.position.y = 6; //
-    map->player.position.direction = NORTH;
-    return map;
-}
+// TODO: New function to add the spriteArea array into the parent "layout" array when a ship is in a VALID position AND the navswitch is pressed
 
-int main(void)
+int main (void)
 {
-    // TODO: cleanup
+    //TODO: cleanup
     int tick = 0;
     int ledStatus;
-    int introtick = 0;
-    int state = 1;
 
-    // library init
-    system_init();
+    map_t map;
+    map.player.position.x = 6; //players initial position
+    map.player.position.y = 7; //
+    map.player.position.direction = NORTH;
+
+    map.player.sprite = shipSelection(&map);
+    updateDisplayArea(&map);
+    led_set(LED1, 0);
+    ledStatus = 0;
+
+    //library init
+    system_init ();
     navswitch_init();
     led_init();
     tinygl_init(LOOP_RATE);
+    drawPlayer(&map);
     pacer_init(LOOP_RATE);
-
-    tinygl_font_set(&font5x7_1);
-    tinygl_text_speed_set(20);
-    tinygl_text_mode_set(TINYGL_TEXT_MODE_SCROLL);
-    tinygl_text("PLACE YOUR SHIPS "); //needs to be null-terminated
-
-    led_set(LED1, 0);
-    ledStatus = 0;
 
     /* Paced loop.  */
     while (1) {
         pacer_wait();
         navswitch_update();
 
-        // Our pacer is set to 300HZ, so the "tick" variable will increase from 0 - 300 in exactly one second
-        // The "introtick" variable denotes the amount of seconds the message has displayed.
-        // Once "introtick" reaches 10(seconds), progess the "state"
-        if (tick >= LOOP_RATE) {
-            if (ledStatus == 1) { // re-added the led cycle to debug segfaults, helpful to know if we have reached this
-                ledStatus = 0;    // point and are still processing
+        //Keeps blue led cycling at 1 second intervals, useful for debugging. //Moved into movePlayer to debug safezone
+/*        if (tick >= LOOP_RATE) {
+            if (ledStatus == 1) {
+                led_set(LED1, 0);
+                ledStatus = 0;
             } else {
                 led_set(LED1, 1);
                 ledStatus = 1;
             }
-
-            introtick++;
-            if (introtick == 10 && state == 1) {
-                state = 2;
-                tinygl_clear();
-            }
             tick = 0;
-        }
+        }*/
 
-        if (state == 2) {
-            // I think the problem was, mapInit() calls tinygl functions using variables decleared within the the
-            // same context as the "tinygl_text", when theyre initalized, they conflict and the program doesnt run.
-            // Trying to get around this, ive initialize "map" in a separate function and returned a pointer to keep it
-            // out of the main() scope. Not quite working yet, but at least it doesnt blow up :)
-
-            map_t *map = mapInit();
-            movePlayer(&map);
-        }
-
-        tinygl_update ();
         tick = tick + 1;
+        movePlayer(&map);
+        tinygl_update ();
 
     }
 }
