@@ -1,0 +1,18 @@
+1. TinyGl text displays "Place Your Ships"
+2. 1 by one, the user will be able to place their ships using navswitch.
+Moving is done by using the NORTH, EAST, SOUTH, WEST buttons, rotation is done by holding the navswitch button.
+When you are happy to move onto the next ship, push and release the navswitch button (less than 2 seconds)
+3. Once all ships are layed out, some text will be displayed continiously saying "Waiting for other player" until the other player joins, 
+4. The person who inputted all their ships first will be the first one starting
+
+//Comment: Just for simplicity, I think it's a good idea if it's you opponent's turn, then there will
+// Just be some text saying "Waiting for other players turn". 
+
+Repeat steps until all battleships are destroyed
+    Player 2 (The person waiting will have this displayed on their screen "Waitint for {player1}")
+    Player 1 will be able to select a certain pixel in the screen. All positions that have currently been hit will be flashing
+    whilst all positions that have been attempted will just be on. 
+    Once all battleshpis have been destroyed, both players will have a continious text cycle saying either
+    "You Win" or "You Lose"
+
+
