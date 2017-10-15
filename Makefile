@@ -12,7 +12,7 @@ all: game.out
 
 # Compile: create object files from C source files.
 # 
-game.o: game.c ../../drivers/avr/system.h ../../drivers/ledmat.h ../../utils/pacer.h ../../drivers/avr/ir_uart.h
+game.o: game.c ../../drivers/avr/system.h ../../drivers/ledmat.h ../../utils/pacer.h ../../drivers/avr/ir_uart.h 
 	$(CC) -c $(CFLAGS) $< -o $@
 
 ircommunication.o: ./ircommunication.c ../../drivers/avr/system.h ../../drivers/navswitch.h ../../utils/pacer.h ../../drivers/avr/ir_uart.h ../../drivers/led.h ../../utils/pacer.h

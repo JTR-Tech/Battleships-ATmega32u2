@@ -6,24 +6,35 @@
 
 // Characters that will be sent with ir_uart_putc()
 #define USER_IS_READY 'r'
-#define DONE_WITH_ROUND 'd'
+#define DONE_MESSAGE 'd'
 #define USER_HIT 'h'
+#define MAP_WIDTH 15
+#define MAP_HEIGHT 11
+#define MAP_EMPTY '0'
+#define MAP_BORDER '1'
+#define MAP_USER_SHIP '2'
+#define MAP_OPPONENT_SHIP '3'
 
 /* Will block until both players have pressed the NAVSWITCH_PUSH button.
    Will return true if user pressed first otherwise it will return false*/
-bool waitForBothPlayers(void)
+bool waitForBothPlayers(const uint8_t usersMap[MAP_HEIGHT][MAP_WIDTH],
+                        uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH])
 {
-
     bool userReady = false;
     bool opponentReady = false;
     bool goesFirst;
+
+    uint8_t currentWidth = 0;
+    uint8_t currentHeight = 0;
+
+    bool notProcessing = false;
 
     while (1) {
         pacer_wait();
         navswitch_update();
         // If button is pushed, then player is ready
         if (navswitch_push_event_p(NAVSWITCH_PUSH)) {
-            userReady = false;
+            userReady = true;
 
             // If opponent has not pressed, then user will go first
             if (opponentReady == false) {
@@ -35,12 +46,21 @@ bool waitForBothPlayers(void)
             // Send messsage to opponent telling them that you have pressed the
             // button
             ir_uart_putc(USER_IS_READY);
+
+            for (int i = 0; i < MAP_HEIGHT; i++) {
+                for (int j = 0; j < MAP_WIDTH; j++) {
+                    // map[i][j] + '0'
+                    ir_uart_putc(usersMap[i][j] + '0');
+                }
+            }
         }
 
         // If messaged recieved, then opponent is ready
         if (ir_uart_read_ready_p()) {
             // Making sure that the write message was sent
-            if (ir_uart_getc() == USER_IS_READY) {
+            char returnedChar = ir_uart_getc();
+
+            if (returnedChar == USER_IS_READY) {
                 opponentReady = true;
 
                 // If user pressed button first, then user will go first
@@ -49,11 +69,32 @@ bool waitForBothPlayers(void)
                 } else {
                     goesFirst = false;
                 }
+            } else if ((returnedChar == MAP_EMPTY ||
+                        returnedChar == MAP_BORDER ||
+                        returnedChar == MAP_USER_SHIP) &&
+                       currentHeight != 11) {
+
+                if (returnedChar == MAP_USER_SHIP) {
+                    returnedChar = MAP_OPPONENT_SHIP;
+                }
+
+                opponentsMap[currentHeight][currentWidth] = returnedChar - '0';
+
+                if (currentWidth == 14) {
+                    currentHeight += 1;
+                    currentWidth = 0;
+
+                    if (currentHeight == 11) {
+                        led_set(LED1, 1);
+                        notProcessing = true;
+                    }
+                } else {
+                    currentWidth++;
+                }
             }
         }
 
-        // If both users are ready then return who pressed first
-        if (userReady && opponentReady) {
+        if (userReady && opponentReady && notProcessing) {
             return goesFirst;
         }
     }
@@ -65,7 +106,7 @@ bool waitForBothPlayers(void)
 */
 void userDoneWithRound(void)
 {
-    ir_uart_putc(DONE_WITH_ROUND);
+    ir_uart_putc(DONE_MESSAGE);
 }
 
 /*
@@ -75,30 +116,10 @@ void userDoneWithRound(void)
 bool isUserDoneWithRound(void)
 {
     if (ir_uart_read_ready_p()) {
-        if (ir_uart_getc() == DONE_WITH_ROUND) {
+        if (ir_uart_getc() == DONE_MESSAGE) {
             return true;
         }
     }
 
     return false;
-}
-
-/*
-
-*/
-bool sendMissile(uint8_t x, uint8_t y)
-{
-
-    char[5] coordinates;
-    sprintf(coordinates, "%d%d", xy);
-    ir_uart_puts(coordinates);
-
-    while (1) {
-        if (ir_uart_read_ready_p()) {
-            if (ir_uart_getc() == USER_HIT) {
-
-            } else {
-            }
-        }
-    }
 }
