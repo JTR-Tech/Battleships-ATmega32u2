@@ -15,9 +15,59 @@
 #define MAP_USER_SHIP '2'
 #define MAP_OPPONENT_SHIP '3'
 
+/*
+    Will send the 'USER_IS_READY' message along with the map contents to the
+   opponent
+*/
+static void sendReadyAndMap(uint8_t usersMap[MAP_HEIGHT][MAP_WIDTH])
+{
+    // Send messsage to opponent telling them that you have pressed the
+    // button
+    ir_uart_putc(USER_IS_READY);
+
+    for (int i = 0; i < MAP_HEIGHT; i++) {
+        for (int j = 0; j < MAP_WIDTH; j++) {
+            // Send the map coordinate converted to char representation
+            ir_uart_putc(usersMap[i][j] + '0');
+        }
+    }
+}
+
+/*
+    Inserts the returned char into the opponentsMap as an integer
+*/
+static void insertIntoOpponentsMap(uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH],
+                                   char returnedChar, uint8_t* currentWidth,
+                                   uint8_t* currentHeight, bool* notProcessing)
+{
+    // If the returned char is of type 'USER_SHIP', then change it to
+    // 'OPPONENT_SHIP'
+    if (returnedChar == MAP_USER_SHIP) {
+        returnedChar = MAP_OPPONENT_SHIP;
+    }
+
+    // Insert the returnedChar at the current coordinate an an int
+    // representation of the char
+    opponentsMap[*currentHeight][*currentWidth] = returnedChar - '0';
+
+    // If currently at end of row, then increment counter
+    if (*currentWidth == 14) {
+        *currentHeight += 1;
+        *currentWidth = 0;
+
+        // If the currentHeight is 11, then transmission is complete
+        if (*currentHeight == 11) {
+            led_set(LED1, 1);
+            *notProcessing = true;
+        }
+    } else {
+        *currentWidth += 1;
+    }
+}
+
 /* Will block until both players have pressed the NAVSWITCH_PUSH button.
    Will return true if user pressed first otherwise it will return false*/
-bool waitForBothPlayers(const uint8_t usersMap[MAP_HEIGHT][MAP_WIDTH],
+bool waitForBothPlayers(uint8_t usersMap[MAP_HEIGHT][MAP_WIDTH],
                         uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH])
 {
     bool userReady = false;
@@ -43,16 +93,8 @@ bool waitForBothPlayers(const uint8_t usersMap[MAP_HEIGHT][MAP_WIDTH],
                 goesFirst = false;
             }
 
-            // Send messsage to opponent telling them that you have pressed the
-            // button
-            ir_uart_putc(USER_IS_READY);
-
-            for (int i = 0; i < MAP_HEIGHT; i++) {
-                for (int j = 0; j < MAP_WIDTH; j++) {
-                    // map[i][j] + '0'
-                    ir_uart_putc(usersMap[i][j] + '0');
-                }
-            }
+            // Send messages to opponent
+            sendReadyAndMap(usersMap);
         }
 
         // If messaged recieved, then opponent is ready
@@ -74,23 +116,9 @@ bool waitForBothPlayers(const uint8_t usersMap[MAP_HEIGHT][MAP_WIDTH],
                         returnedChar == MAP_USER_SHIP) &&
                        currentHeight != 11) {
 
-                if (returnedChar == MAP_USER_SHIP) {
-                    returnedChar = MAP_OPPONENT_SHIP;
-                }
-
-                opponentsMap[currentHeight][currentWidth] = returnedChar - '0';
-
-                if (currentWidth == 14) {
-                    currentHeight += 1;
-                    currentWidth = 0;
-
-                    if (currentHeight == 11) {
-                        led_set(LED1, 1);
-                        notProcessing = true;
-                    }
-                } else {
-                    currentWidth++;
-                }
+                insertIntoOpponentsMap(opponentsMap, returnedChar,
+                                       &currentWidth, &currentHeight,
+                                       &notProcessing);
             }
         }
 

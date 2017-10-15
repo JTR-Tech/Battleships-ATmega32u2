@@ -8,8 +8,8 @@
 
 /* Will block until both players have pressed the NAVSWITCH_PUSH button.
    Will return true if user pressed first otherwise it will return false*/
-uint8_t waitForBothPlayers(const uint8_t usersMap[MAP_HEIGHT][MAP_WIDTH],
-                           uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH]);
+bool waitForBothPlayers(uint8_t usersMap[MAP_HEIGHT][MAP_WIDTH],
+                        uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH]);
 
 /* Call this after user has finished their round.
    Will notify the opponent that their turn has finished
