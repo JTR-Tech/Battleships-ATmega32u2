@@ -45,7 +45,7 @@ struct ship  {
     uint8_t height;
     uint8_t width;
     uint8_t direction; // 0 = horz 1 = vert
-    uint8_t **area;
+    uint8_t *area[4][4]; // this should be allocated dynamically/ or drawPlayer breaks on null terminator
 };
 typedef struct ship ship_t;
 
@@ -63,19 +63,11 @@ struct position {
 };
 typedef struct position position_t;
 
-/*struct safezone // When the player position is at "x3 - x11 or y2 - y8", dont
-                // pan camera, move sprite instead
-{
-    position_t position;
-};
-typedef struct safezone safezone_t;*/
-
 struct player {
     ship_t currentShip;
-    int spriteRotation;
+    //int spriteRotation;
     position_t position;
     position_t spritePosition;
-    //safezone_t safezone;
     navy_t units;
 };
 typedef struct player player_t;
@@ -100,7 +92,6 @@ void updateDisplayArea(map_t *map)
     //Mapping the main map to a section the size of the display
     for (int i = 0; i < RENDER_HEIGHT && start_pos_x + i < MAP_HEIGHT; i++) {
         for (int k = 0; k < RENDER_WIDTH && start_pos_y + k < MAP_WIDTH; k++) {
-            //TODO: maybe modify this section to pass a tinygl_coord_t type instead
             map->displayArea[i][k] = layout[start_pos_x + i][start_pos_y + k];
         }
     }
@@ -108,30 +99,32 @@ void updateDisplayArea(map_t *map)
 
 void drawPlayer(map_t *map)
 {
-    //This function is tasked with rendering player, usually center of the screen. Unless safezone is set, then we
-    //move the player in direction the camera otherwise would have.
-    //if (map->player.safezone.position.x || map->player.safezone.position.y) {
-    //tinygl_pixel_set({map->player.position.x, map->player.position.y}, 0);
+    // This function is tasked with rendering player, usually center of the screen. Unless safezone is set, then we
+    // move the player in direction the camera otherwise would have.
 
-    //start from left hand led
+    //start from left
     int start_pos_x = map->player.position.x - 1;
     int start_pos_y = map->player.position.y - 2;
-    //width of ship
+
+    //width/height of ship, essentially defining the rows/ columns the sprite will consume
     int width = map->player.currentShip.height;
     int height = map->player.currentShip.width;
 
-    for (int i = 0; i < height; i++) {
-        for (int k = 0; k < width; k++ ) {
+    for (int i = 0; i < height && start_pos_x + i < MAP_HEIGHT -1 && start_pos_x + i >= 0; i++) {
+        for (int k = 0; k < width && start_pos_y + k < MAP_WIDTH -1 && start_pos_y + k >= 0; k++ ) {
+            // dumb drawing
             tinygl_point_t tmp = {1 + i, 2 + k};
             tinygl_pixel_set(tmp, 1);
-            //TODO: out of bounds issues, allocate and store ship area better
-            //map->player.currentShip.area[start_pos_x + i][start_pos_y + k] = 1;
+            // TODO: ensure that placement happens within the boarders of the map
+            // here we basically store the addresses of the map cells of which our ship is placed overtop.
+            // to be used later.
+            map->player.currentShip.area[i][k] = &layout[start_pos_x + i][start_pos_y + k];
 
         }
     }
 }
 
-void updateMap(map_t *map)
+void framebuffer(map_t *map)
 {
     //Here we take the frame stored by the updateDisplayArea function and push it to the LED matrix
     for (int i = 0; i < RENDER_HEIGHT; i++) {
@@ -140,6 +133,23 @@ void updateMap(map_t *map)
             tinygl_pixel_set(tmp, map->displayArea[i][k]);
         }
     }
+}
+
+void placeShip(map_t *map) {
+    // on navswtich press, use the pointers stored in currentShip.area to modify the map
+
+    int width = map->player.currentShip.height;
+    int height = map->player.currentShip.width;
+
+    for (int i = 0; i < height; i++) {
+        for (int k = 0; k < width; k++) {
+            int *ptr = map->player.currentShip.area[i][k];
+            *ptr = 1;
+        }
+    }
+    shipSelection(&map);
+    //led_set(LED1, 0);
+    updateDisplayArea(map);
 }
 
 void movePlayer(map_t *map)
@@ -151,7 +161,7 @@ void movePlayer(map_t *map)
         updateDisplayArea(map);
 
         //Make sure to call "drawPlayer" after "updateMap", else the player sprite is clobbered with map state
-        updateMap(map);
+        framebuffer(map);
         drawPlayer(map);
     }
 
@@ -159,7 +169,7 @@ void movePlayer(map_t *map)
         map->player.position.y++;
         updateDisplayArea(map);
 
-        updateMap(map);
+        framebuffer(map);
         drawPlayer(map);
     }
 
@@ -167,7 +177,7 @@ void movePlayer(map_t *map)
         map->player.position.x--;
         updateDisplayArea(map);
 
-        updateMap(map);
+        framebuffer(map);
         drawPlayer(map);
     }
 
@@ -175,8 +185,13 @@ void movePlayer(map_t *map)
         map->player.position.x++;
         updateDisplayArea(map);
 
-        updateMap(map);
+        framebuffer(map);
         drawPlayer(map);
+    }
+
+    // if navswitch is pressed in, confirm ship position
+    if (navswitch_push_event_p (NAVSWITCH_PUSH)) {
+        placeShip(map);
     }
 
 }
@@ -184,25 +199,21 @@ void movePlayer(map_t *map)
 void shipSelection(map_t *map) {
     //move down the conditionals until all units are placed
     if (map->player.units.noOfLargeShips > 0) {
-        map->player.units.noOfLargeShips - 1;
+        map->player.units.noOfLargeShips--;
         map->player.currentShip.height = 2;
         map->player.currentShip.width = 4;
-        //improve this
-        //&map->player.currentShip.area[2][4];
     }
 
     else if (map->player.units.noOfMediumShips > 0) {
-        map->player.units.noOfMediumShips - 1;
+        map->player.units.noOfMediumShips--;
         map->player.currentShip.height = 1;
         map->player.currentShip.width = 3;
-        //&map->player.currentShip.area[1][3];
     }
 
     else {
-        map->player.units.noOfSmallShips - 1;
+        map->player.units.noOfSmallShips--;
         map->player.currentShip.height = 1;
         map->player.currentShip.width = 2;
-        //&map->player.currentShip.area[1][2];
     }
 }
 
@@ -260,7 +271,7 @@ int main (void)
         navswitch_update();
 
         //Keeps blue led cycling at 1 second intervals, useful for debugging. //Moved into movePlayer to debug safezone
-        if (tick >= LOOP_RATE) {
+/*        if (tick >= LOOP_RATE) {
             if (ledStatus == 1) {
                 led_set(LED1, 0);
                 ledStatus = 0;
@@ -270,7 +281,7 @@ int main (void)
             }
             tick = 0;
         }
-        tick++;
+        tick++;*/
         movePlayer(&map);
         tinygl_update ();
 
