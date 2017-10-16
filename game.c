@@ -113,6 +113,7 @@ void drawPlayer(map_t *map)
     for (int i = 0; i < height && start_pos_x + i < MAP_HEIGHT -1 && start_pos_x + i >= 0; i++) {
         for (int k = 0; k < width && start_pos_y + k < MAP_WIDTH -1 && start_pos_y + k >= 0; k++ ) {
             // dumb drawing, magic numbers here are to align with the players position
+            // TODO: fix alignment in both rotations (currently only)
             tinygl_point_t tmp = {k + 2,i + 1};
             tinygl_pixel_set(tmp, 1);
             // TODO: ensure that placement happens within the boarders of the map
@@ -122,6 +123,7 @@ void drawPlayer(map_t *map)
 
         }
     }
+    updateDisplayArea(map);
 }
 
 void framebuffer(map_t *map)
@@ -157,7 +159,10 @@ void rotateShip(map_t *map) {
     int tmp = map->player.currentShip.width;
     map->player.currentShip.width = map->player.currentShip.height;
     map->player.currentShip.height = tmp;
+
+    // refresh the screen immediately
     updateDisplayArea(map);
+    framebuffer(map);
     drawPlayer(map);
 }
 
