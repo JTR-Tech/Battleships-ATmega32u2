@@ -12,7 +12,7 @@ all: game.out
 
 # Compile: create object files from C source files.
 # 
-game.o: game.c ../../drivers/avr/system.h ../../drivers/ledmat.h ../../utils/pacer.h ../../drivers/avr/ir_uart.h 
+game.o: game.c ../../drivers/avr/system.h ../../drivers/ledmat.h ../../utils/pacer.h ../../drivers/avr/ir_uart.h ../../drivers/button.h 
 	$(CC) -c $(CFLAGS) $< -o $@
 
 ircommunication.o: ./ircommunication.c ../../drivers/avr/system.h ../../drivers/navswitch.h ../../utils/pacer.h ../../drivers/avr/ir_uart.h ../../drivers/led.h ../../utils/pacer.h
@@ -23,6 +23,7 @@ ir_uart.o: ../../drivers/avr/ir_uart.c ../../drivers/avr/ir_uart.h ../../drivers
 timer0.o: ../../drivers/avr/timer0.c ../../drivers/avr/bits.h ../../drivers/avr/prescale.h ../../drivers/avr/system.h ../../drivers/avr/timer0.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
+
 prescale.o: ../../drivers/avr/prescale.c ../../drivers/avr/prescale.h ../../drivers/avr/system.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
@@ -31,6 +32,9 @@ usart1.o: ../../drivers/avr/usart1.c ../../drivers/avr/system.h ../../drivers/av
 
 
 pio.o: ../../drivers/avr/pio.c ../../drivers/avr/pio.h ../../drivers/avr/system.h
+	$(CC) -c $(CFLAGS) $< -o $@
+
+button.o: ../../drivers/button.c ../../drivers/avr/pio.h ../../drivers/avr/system.h ../../drivers/button.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
 system.o: ../../drivers/avr/system.c ../../drivers/avr/system.h
@@ -62,7 +66,7 @@ font.o: ../../utils/font.c ../../drivers/avr/system.h ../../utils/font.h
 
 
 # Link: create output file (executable) from object files.
-game.out: game.o font.o display.o pio.o tinygl.o system.o led.o timer.o navswitch.o ledmat.o pacer.o ir_uart.o  timer0.o usart1.o prescale.o ircommunication.o
+game.out: game.o font.o display.o pio.o tinygl.o system.o led.o timer.o navswitch.o ledmat.o pacer.o ir_uart.o  timer0.o usart1.o prescale.o ircommunication.o button.o
 	$(CC) $(CFLAGS) $^ -o $@ -lm
 	$(SIZE) $@
 
