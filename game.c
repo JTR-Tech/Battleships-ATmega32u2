@@ -19,7 +19,7 @@
 
 
 //0 = placingships, 1 = players turn, 3 = player waiting TODO: use it
-//uint8_t gameState = 0;
+uint8_t gameState = 0;
 
 // below is a simple "map", 1's indicating LED(on), 0's indicating LED(off). If
 // the MAP_WIDTH and MAP_HEIGHT values  are changed, the layout array must be
@@ -27,9 +27,9 @@
 static uint8_t layout[MAP_HEIGHT][MAP_WIDTH] = {
     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
     {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
     {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, // NORTH
     {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
     {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
@@ -102,31 +102,47 @@ void drawPlayer(map_t *map)
     // This function is tasked with rendering player, usually center of the screen. Unless safezone is set, then we
     // move the player in direction the camera otherwise would have.
 
-    int offset_x = 2;
-    int offset_y = 2;
+    if (gameState == 0) { //placement mode
+        static int offset_x = 2;
+        static int offset_y = 2;
 
-    //start from left
-    int start_pos_x = map->player.position.x - 1;
-    int start_pos_y = map->player.position.y;
+        //start from left
+        int start_pos_x = map->player.position.x - 1;
+        int start_pos_y = map->player.position.y;
 
-    //width/height of ship, essentially defining the rows/ columns the sprite will consume
-    int width = map->player.currentShip.height;
-    int height = map->player.currentShip.width;
+        //width/height of ship, essentially defining the rows/ columns the sprite will consume
+        int width = map->player.currentShip.height;
+        int height = map->player.currentShip.width;
 
-    for (int x = 0; x < height && start_pos_x + x < MAP_HEIGHT -1 && start_pos_x + x >= 0; x++) {
-        for (int y = 0; y < width && start_pos_y + y < MAP_WIDTH -1 && start_pos_y + y >= 0; y++ ) {
-            // dumb drawing, magic numbers here are to align with the players position
-            // TODO: fix alignment in both rotations (currently only)
-            tinygl_point_t tmp = {y + offset_y ,x + offset_x};
+        for (int x = 0; x < height && start_pos_x + x < MAP_HEIGHT - 1 && start_pos_x + x >= 0; x++) {
+            for (int y = 0; y < width && start_pos_y + y < MAP_WIDTH - 1 && start_pos_y + y >= 0; y++) {
+                // dumb drawing, magic numbers here are to align with the players position
+                tinygl_point_t tmp = {y + offset_y, x + offset_x};
+                tinygl_pixel_set(tmp, 1);
+                // TODO: ensure that placement happens within the boarders of the map
+                // here we basically store the addresses of the map cells of which our ship is placed overtop.
+                // to be used later.
+                map->player.currentShip.area[x][y] = &layout[start_pos_x + x][start_pos_y + y];
+
+            }
+        }
+        updateDisplayArea(map);
+    }
+
+    else if (gameState == 1) {
+
+        static int offset_x = 2;
+        static int offset_y = 1;
+
+        for (int x = 0; x < 3; x++) {
+            tinygl_point_t tmp = {offset_y + 1, x + offset_x};
             tinygl_pixel_set(tmp, 1);
-            // TODO: ensure that placement happens within the boarders of the map
-            // here we basically store the addresses of the map cells of which our ship is placed overtop.
-            // to be used later.
-            map->player.currentShip.area[x][y] = &layout[start_pos_x + x][start_pos_y + y];
-
+        }
+        for (int y = 0; y < 3; y++) {
+            tinygl_point_t tmp = {y + offset_y, offset_x + 1};
+            tinygl_pixel_set(tmp, 1);
         }
     }
-    updateDisplayArea(map);
 }
 
 void framebuffer(map_t *map)
@@ -152,7 +168,7 @@ void placeShip(map_t *map) {
             *ptr = 1; // this is the value ulimately drawn on the map, should be a "2"
         }
     }
-    shipSelection(&map);
+    shipSelection(map);
     // refresh the screen immediately
     updateDisplayArea(map);
     framebuffer(map);
@@ -239,6 +255,10 @@ void shipSelection(map_t *map) {
         map->player.currentShip.height = 1;
         map->player.currentShip.width = 2;
     }
+
+    else {
+        gameState++;
+    }
 }
 
 //TODO: below is a skeleton for a possible task.h implementation
@@ -257,9 +277,6 @@ static void recieve_task (map_t *map)
     //getData
 }*/
 
-// TODO: New function to add the spriteArea array into the parent "layout" array when a ship is in a VALID position AND the navswitch is pressed
-
-
 
 int main (void)
 {
@@ -273,7 +290,7 @@ int main (void)
 
     //ship quantities
     map.player.units.noOfLargeShips = 2;
-    map.player.units.noOfMediumShips = 3;
+    map.player.units.noOfMediumShips = 2;
     map.player.units.noOfSmallShips = 3;
 
     shipSelection(&map);
