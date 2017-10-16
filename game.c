@@ -102,6 +102,9 @@ void drawPlayer(map_t *map)
     // This function is tasked with rendering player, usually center of the screen. Unless safezone is set, then we
     // move the player in direction the camera otherwise would have.
 
+    int offset_x = 2;
+    int offset_y = 2;
+
     //start from left
     int start_pos_x = map->player.position.x - 1;
     int start_pos_y = map->player.position.y;
@@ -110,16 +113,16 @@ void drawPlayer(map_t *map)
     int width = map->player.currentShip.height;
     int height = map->player.currentShip.width;
 
-    for (int i = 0; i < height && start_pos_x + i < MAP_HEIGHT -1 && start_pos_x + i >= 0; i++) {
-        for (int k = 0; k < width && start_pos_y + k < MAP_WIDTH -1 && start_pos_y + k >= 0; k++ ) {
+    for (int x = 0; x < height && start_pos_x + x < MAP_HEIGHT -1 && start_pos_x + x >= 0; x++) {
+        for (int y = 0; y < width && start_pos_y + y < MAP_WIDTH -1 && start_pos_y + y >= 0; y++ ) {
             // dumb drawing, magic numbers here are to align with the players position
             // TODO: fix alignment in both rotations (currently only)
-            tinygl_point_t tmp = {k + 2,i + 1};
+            tinygl_point_t tmp = {y + offset_y ,x + offset_x};
             tinygl_pixel_set(tmp, 1);
             // TODO: ensure that placement happens within the boarders of the map
             // here we basically store the addresses of the map cells of which our ship is placed overtop.
             // to be used later.
-            map->player.currentShip.area[i][k] = &layout[start_pos_x + i][start_pos_y + k];
+            map->player.currentShip.area[x][y] = &layout[start_pos_x + x][start_pos_y + y];
 
         }
     }
@@ -150,8 +153,10 @@ void placeShip(map_t *map) {
         }
     }
     shipSelection(&map);
-    //led_set(LED1, 0);
+    // refresh the screen immediately
     updateDisplayArea(map);
+    framebuffer(map);
+    drawPlayer(map);
 }
 
 void rotateShip(map_t *map) {
@@ -229,7 +234,7 @@ void shipSelection(map_t *map) {
         map->player.currentShip.width = 3;
     }
 
-    else {
+    else if (map->player.units.noOfSmallShips > 0) {
         map->player.units.noOfSmallShips--;
         map->player.currentShip.height = 1;
         map->player.currentShip.width = 2;
