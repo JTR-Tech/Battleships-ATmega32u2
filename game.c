@@ -104,7 +104,7 @@ void drawPlayer(map_t *map)
 
     //start from left
     int start_pos_x = map->player.position.x - 1;
-    int start_pos_y = map->player.position.y - 2;
+    int start_pos_y = map->player.position.y;
 
     //width/height of ship, essentially defining the rows/ columns the sprite will consume
     int width = map->player.currentShip.height;
@@ -112,8 +112,8 @@ void drawPlayer(map_t *map)
 
     for (int i = 0; i < height && start_pos_x + i < MAP_HEIGHT -1 && start_pos_x + i >= 0; i++) {
         for (int k = 0; k < width && start_pos_y + k < MAP_WIDTH -1 && start_pos_y + k >= 0; k++ ) {
-            // dumb drawing
-            tinygl_point_t tmp = {1 + i, 2 + k};
+            // dumb drawing, magic numbers here are to align with the players position
+            tinygl_point_t tmp = {k + 2,i + 1};
             tinygl_pixel_set(tmp, 1);
             // TODO: ensure that placement happens within the boarders of the map
             // here we basically store the addresses of the map cells of which our ship is placed overtop.
@@ -144,7 +144,7 @@ void placeShip(map_t *map) {
     for (int i = 0; i < height; i++) {
         for (int k = 0; k < width; k++) {
             int *ptr = map->player.currentShip.area[i][k];
-            *ptr = 1;
+            *ptr = 1; // this is the value ulimately drawn on the map, should be a "2"
         }
     }
     shipSelection(&map);
