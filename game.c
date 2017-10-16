@@ -36,7 +36,7 @@ typedef struct ship_s {
 
 Ship ships[] = {{1, 4, VERT, 2}};
 
-int layout[RENDER_HEIGHT][RENDER_WIDTH] = {
+uint8_t layout[RENDER_HEIGHT][RENDER_WIDTH] = {
     {1, 0, 1, 0, 0},
 
     {1, 1, 1, 1, 0},
@@ -131,6 +131,9 @@ void saveShipToMap(Ship* ship)
             layout[i][ship->otherAxis] = 1;
         }
     } else {
+        for (int i = ships->startingPoint; i <= ship->endingPoint; i++) {
+            layout[ship->otherAxis][i] = 1;
+        }
     }
 }
 
@@ -141,13 +144,23 @@ void rotateShip(Ship* ship)
     if (ship->direction == VERT) {
         ship->direction = HORZ;
         ship->otherAxis = 3;
+        ship->endingPoint = ship->endingPoint - ship->startingPoint;
         ship->startingPoint = 0;
-        ship->endingPoint = ship->endingPoint - ship->startingPoint - 1;
     } else {
         ship->direction = VERT;
         ship->otherAxis = 2;
-        ship->startingPoint = 0;
         ship->endingPoint = ship->endingPoint - ship->startingPoint;
+        ship->startingPoint = 0;
+    }
+}
+
+void printLayout(void)
+{
+    for (int i = 0; i < RENDER_WIDTH; i++) {
+        for (int j = 0; j < RENDER_HEIGHT; j++) {
+            tinygl_point_t p = {j, i};
+            tinygl_draw_point(p, layout[j][i]);
+        }
     }
 }
 
@@ -173,8 +186,13 @@ int main(void)
             rotateShip(&ships[0]);
         }
 
+        printLayout();
+
         moveShip(&ships[0]);
         printOrClearShip(&ships[0], 1);
+
+        if (navswitch_push_event_p(NAVSWITCH_PUSH)) {
+        }
 
         tinygl_update();
     }
