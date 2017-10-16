@@ -41,12 +41,15 @@ tinygl.o: ../../utils/tinygl.c ../../drivers/avr/system.h ../../drivers/display.
 display.o: ../../drivers/display.c ../../drivers/avr/system.h ../../drivers/display.h ../../drivers/ledmat.h
 	$(CC) -c $(CFLAGS) $< -o $@
 	
+button.o: ../../drivers/button.c ../../drivers/avr/system.h
+	$(CC) -c $(CFLAGS) $< -o $@
+	
 font.o: ../../utils/font.c ../../drivers/avr/system.h ../../utils/font.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
 
 # Link: create output file (executable) from object files.
-game.out: game.o font.o display.o pio.o tinygl.o system.o led.o timer.o navswitch.o ledmat.o pacer.o
+game.out: game.o button.o font.o display.o pio.o tinygl.o system.o led.o timer.o navswitch.o ledmat.o pacer.o
 	$(CC) $(CFLAGS) $^ -o $@ -lm
 	$(SIZE) $@
 

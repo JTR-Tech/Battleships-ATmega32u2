@@ -6,7 +6,7 @@
 #include "system.h"
 #include "tinygl.h"
 #include <stdio.h>
-//#include "task.h"
+#include "button.h"
 
 /* Define polling rate in Hz.  */
 #define LOOP_RATE 300
@@ -152,6 +152,15 @@ void placeShip(map_t *map) {
     updateDisplayArea(map);
 }
 
+void rotateShip(map_t *map) {
+    // Simply swap currentShip.height and currentShip.width
+    int tmp = map->player.currentShip.width;
+    map->player.currentShip.width = map->player.currentShip.height;
+    map->player.currentShip.height = tmp;
+    updateDisplayArea(map);
+    drawPlayer(map);
+}
+
 void movePlayer(map_t *map)
 {
     //This function moves the player in the direction of the navswtich, really we're manipulating the "camera"
@@ -192,6 +201,11 @@ void movePlayer(map_t *map)
     // if navswitch is pressed in, confirm ship position
     if (navswitch_push_event_p (NAVSWITCH_PUSH)) {
         placeShip(map);
+    }
+
+    // if button(near IR) is pressed, rotate the currentShip
+    if (button_push_event_p (0)) {
+        rotateShip(map);
     }
 
 }
@@ -261,6 +275,7 @@ int main (void)
     system_init ();
     navswitch_init();
     led_init();
+    button_init();
     tinygl_init(LOOP_RATE);
     drawPlayer(&map);
     pacer_init(LOOP_RATE);
@@ -269,6 +284,7 @@ int main (void)
     while (1) {
         pacer_wait();
         navswitch_update();
+        button_update();
 
         //Keeps blue led cycling at 1 second intervals, useful for debugging. //Moved into movePlayer to debug safezone
 /*        if (tick >= LOOP_RATE) {
