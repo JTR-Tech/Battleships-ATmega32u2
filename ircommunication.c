@@ -13,7 +13,6 @@
 #define MAP_EMPTY '0'
 #define MAP_BORDER '1'
 #define MAP_USER_SHIP '2'
-#define MAP_OPPONENT_SHIP '3'
 
 /*
     Will send the 'USER_IS_READY' message along with the map contents to the
