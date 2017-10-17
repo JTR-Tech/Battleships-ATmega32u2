@@ -3,8 +3,8 @@
 #ifndef IRCOMMUNICATION_H
 #define IRCOMMUNICATION_H
 
-#define MAP_WIDTH 15
-#define MAP_HEIGHT 11
+#define MAP_WIDTH 5
+#define MAP_HEIGHT 7
 
 /* Will block until both players have pressed the NAVSWITCH_PUSH button.
    Will return true if user pressed first otherwise it will return false*/

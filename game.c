@@ -1,6 +1,7 @@
 #include "../fonts/font5x7_1.h"
 #include "button.h"
 #include "ir_uart.h"
+#include "ircommunication.h"
 #include "led.h"
 #include "navswitch.h"
 #include "pacer.h"
@@ -8,6 +9,7 @@
 #include "system.h"
 #include "tinygl.h"
 #include <stdio.h>
+
 //#include "task.h"
 
 /* Define polling rate in Hz.  */
@@ -40,8 +42,13 @@ typedef struct num_of_ships_s {
     uint8_t onePoints;
 } NumberOfShips;
 
+typedef struct cursor_s {
+    uint8_t x;
+    uint8_t y;
+} Cursor;
+
 uint8_t layout[MAP_HEIGHT][MAP_WIDTH] = {
-    {0, 0, 0, 0, 0},
+    {1, 0, 0, 0, 0},
 
     {0, 0, 0, 0, 0},
 
@@ -168,10 +175,13 @@ void printLayout(void)
     }
 }
 
-void clearMap()
+void clearMap(void)
 {
-    led_set(LED1, 1);
-    tinygl_clear();
+    for (int i = 0; i < MAP_HEIGHT; i++) {
+        for (int j = 0; j < MAP_WIDTH; j++) {
+            layout[i][j] = 0;
+        }
+    }
 }
 
 bool chooseCurrentShip(NumberOfShips* numberOfShips, Ship* currentShip)
@@ -198,6 +208,50 @@ bool chooseCurrentShip(NumberOfShips* numberOfShips, Ship* currentShip)
     return false;
 }
 
+void renderCursor(Cursor* cursor, bool isFull)
+{
+
+    tinygl_point_t p = {cursor->x, cursor->y};
+    tinygl_draw_point(p, isFull);
+}
+
+void moveAndClickCursor(Cursor* cursor,
+                        uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH])
+{
+
+    if (navswitch_push_event_p(NAVSWITCH_PUSH)) {
+        /*
+        if (opponentsMap[cursor->y][cursor->x]) {
+            led_set(LED1, 1);
+            layout[cursor->y][cursor->x] = 1;
+        }
+        */
+
+        layout[cursor->y][cursor->x] = 1;
+    }
+
+    if (navswitch_push_event_p(NAVSWITCH_NORTH) && cursor->y > 0) {
+        renderCursor(cursor, 0);
+        cursor->y -= 1;
+        renderCursor(cursor, 1);
+
+    } else if (navswitch_push_event_p(NAVSWITCH_EAST) && cursor->x < 4) {
+        renderCursor(cursor, 0);
+        cursor->x += 1;
+        renderCursor(cursor, 1);
+
+    } else if (navswitch_push_event_p(NAVSWITCH_SOUTH) && cursor->y < 6) {
+        renderCursor(cursor, 0);
+        cursor->y += 1;
+        renderCursor(cursor, 1);
+
+    } else if (navswitch_push_event_p(NAVSWITCH_WEST) && cursor->x > 0) {
+        renderCursor(cursor, 0);
+        cursor->x -= 1;
+        renderCursor(cursor, 1);
+    }
+}
+
 int main(void)
 {
     // library init
@@ -209,6 +263,11 @@ int main(void)
     button_init();
     ir_uart_init();
 
+    bool goneYet = false;
+
+    Cursor cursor = {2, 2};
+
+    uint8_t gameState = 0;
     uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH];
 
     NumberOfShips numberOfShips;
@@ -234,31 +293,55 @@ int main(void)
         navswitch_update();
         button_update();
 
-        if (button_push_event_p(BUTTON1)) {
-            rotateShip(&currentShip);
-        }
+        if (gameState == 0) {
+            if (button_push_event_p(BUTTON1)) {
+                rotateShip(&currentShip);
+            }
 
-        printLayout();
+            printLayout();
 
-        moveShip(&currentShip);
-        printOrClearShip(&currentShip, 1);
+            moveShip(&currentShip);
+            printOrClearShip(&currentShip, 1);
 
-        if (navswitch_push_event_p(NAVSWITCH_PUSH)) {
-            saveShipToMap(&currentShip);
-            if (!chooseCurrentShip(&numberOfShips, &currentShip)) {
-                tinygl_clear();
-                tinygl_update();
+            if (navswitch_push_event_p(NAVSWITCH_PUSH)) {
+                saveShipToMap(&currentShip);
+                if (!chooseCurrentShip(&numberOfShips, &currentShip)) {
+                    tinygl_clear();
+                    tinygl_update();
+                    clearMap();
+                    waitForBothPlayers(layout, opponentsMap);
 
-                waitForBothPlayers(layout, opponentsMap);
+                    if (opponentsMap[0][0] == 1) {
+                        led_set(LED1, 1);
+                    }
 
-                if (opponentsMap[6][4] == 1) {
-                    led_set(LED1, 1);
-                }
-
-                while (1) {
-                    pacer_wait();
+                    gameState += 1;
+                    renderCursor(&cursor, 1);
                 }
             }
+        } else if (gameState == 1) {
+
+            moveAndClickCursor(&cursor, opponentsMap);
+
+            for (uint8_t i = 0; i < MAP_WIDTH; i++) {
+                for (uint8_t j = 0; j < MAP_HEIGHT; j++) {
+                    if (layout[j][i] == 1) {
+                        tinygl_point_t p = {i, j};
+                        tinygl_draw_point(p, 1);
+                    }
+                }
+            }
+
+            /*
+            if (isUserDoneWithRound()) {
+                goneYet = false;
+            }
+
+            if (!goneYet) {
+                goneYet = true;
+            }
+
+            */
         }
 
         tinygl_update();

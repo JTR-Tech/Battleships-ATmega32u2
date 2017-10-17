@@ -8,8 +8,6 @@
 #define USER_IS_READY 'r'
 #define DONE_MESSAGE 'd'
 #define USER_HIT 'h'
-#define MAP_WIDTH 15
-#define MAP_HEIGHT 11
 #define MAP_EMPTY '0'
 #define MAP_BORDER '1'
 #define MAP_USER_SHIP '2'
@@ -58,7 +56,6 @@ static void insertIntoOpponentsMap(uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH],
         *currentWidth = 0;
 
         if (*currentHeight == 7) {
-            led_set(LED1, 1);
             *notProcessing = true;
         }
     } else {
@@ -115,7 +112,7 @@ bool waitForBothPlayers(uint8_t usersMap[MAP_HEIGHT][MAP_WIDTH],
             } else if ((returnedChar == MAP_EMPTY ||
                         returnedChar == MAP_BORDER ||
                         returnedChar == MAP_USER_SHIP) &&
-                       currentHeight != 11) {
+                       currentHeight != 7) {
 
                 insertIntoOpponentsMap(opponentsMap, returnedChar,
                                        &currentWidth, &currentHeight,
