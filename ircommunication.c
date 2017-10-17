@@ -1,3 +1,11 @@
+/** @file game.c
+ * @author Rafael Goesmann Joshua Aitken
+ * @date 11th October 2017
+ * @brief An interactive battleships game
+ *
+
+**/
+
 #include "ir_uart.h"
 #include "led.h"
 #include "navswitch.h"
