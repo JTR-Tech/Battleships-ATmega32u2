@@ -65,7 +65,7 @@ font.o: ../../utils/font.c ../../drivers/avr/system.h ../../utils/font.h
 
 
 # Link: create output file (executable) from object files.
-game.out: game.o font.o display.o pio.o tinygl.o system.o led.o timer.o navswitch.o ledmat.o pacer.o ir_uart.o  timer0.o usart1.o prescale.o ircommunication.o
+game.out: game.o button.o font.o display.o pio.o tinygl.o system.o led.o timer.o navswitch.o ledmat.o pacer.o ir_uart.o  timer0.o usart1.o prescale.o ircommunication.o
 	$(CC) $(CFLAGS) $^ -o $@ -lm
 	$(SIZE) $@
 

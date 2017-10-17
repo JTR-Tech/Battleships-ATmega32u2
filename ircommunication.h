@@ -25,11 +25,11 @@ bool isUserDoneWithRound(void);
 /*
     Send the contents of the the users layout to the opponent
 */
-void sendMap(const int map[MAP_HEIGHT][MAP_WIDTH]);
+void sendMap(uint8_t map[MAP_HEIGHT][MAP_WIDTH]);
 
 /*
     Will block until it has retrieved the opponents map
 */
-void getOpponentsMap(int opponentsMap[MAP_HEIGHT][MAP_WIDTH]);
+void getOpponentsMap(uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH]);
 
 #endif
