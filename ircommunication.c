@@ -14,6 +14,8 @@
 #define MAP_BORDER '1'
 #define MAP_USER_SHIP '2'
 #define MAP_OPPONENT_SHIP '3'
+#define MAP_HEIGHT 7
+#define MAP_WIDTH 5
 
 /*
     Will send the 'USER_IS_READY' message along with the map contents to the
@@ -51,12 +53,11 @@ static void insertIntoOpponentsMap(uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH],
     opponentsMap[*currentHeight][*currentWidth] = returnedChar - '0';
 
     // If currently at end of row, then increment counter
-    if (*currentWidth == 14) {
+    if (*currentWidth == 4) { // change this magic number
         *currentHeight += 1;
         *currentWidth = 0;
 
-        // If the currentHeight is 11, then transmission is complete
-        if (*currentHeight == 11) {
+        if (*currentHeight == 7) {
             led_set(LED1, 1);
             *notProcessing = true;
         }

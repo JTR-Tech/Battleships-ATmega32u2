@@ -1,5 +1,6 @@
 #include "../fonts/font5x7_1.h"
 #include "button.h"
+#include "ir_uart.h"
 #include "led.h"
 #include "navswitch.h"
 #include "pacer.h"
@@ -13,10 +14,8 @@
 #define LOOP_RATE 300
 #define LED_RATE 1
 // Constants for map and display size
-#define MAP_WIDTH 15
-#define MAP_HEIGHT 11
-#define RENDER_WIDTH 5
-#define RENDER_HEIGHT 7
+#define MAP_WIDTH 5
+#define MAP_HEIGHT 7
 #define HORZ 1
 #define VERT 0
 
@@ -41,7 +40,7 @@ typedef struct num_of_ships_s {
     uint8_t onePoints;
 } NumberOfShips;
 
-uint8_t layout[RENDER_HEIGHT][RENDER_WIDTH] = {
+uint8_t layout[MAP_HEIGHT][MAP_WIDTH] = {
     {0, 0, 0, 0, 0},
 
     {0, 0, 0, 0, 0},
@@ -54,7 +53,7 @@ uint8_t layout[RENDER_HEIGHT][RENDER_WIDTH] = {
 
     {0, 0, 0, 0, 0},
 
-    {0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 1},
 };
 
 void printOrClearShip(Ship* ship, bool printShip)
@@ -161,8 +160,8 @@ void rotateShip(Ship* ship)
 
 void printLayout(void)
 {
-    for (int i = 0; i < RENDER_WIDTH; i++) {
-        for (int j = 0; j < RENDER_HEIGHT; j++) {
+    for (int i = 0; i < MAP_WIDTH; i++) {
+        for (int j = 0; j < MAP_HEIGHT; j++) {
             tinygl_point_t p = {i, j};
             tinygl_draw_point(p, layout[j][i]);
         }
@@ -171,32 +170,32 @@ void printLayout(void)
 
 void clearMap()
 {
-    for (int i = 0; i < RENDER_WIDTH; i++) {
-        for (int j = 0; j < RENDER_HEIGHT; j++) {
-            tinygl_point_t p = {i, j};
-            tinygl_draw_point(p, 0);
-        }
-    }
+    led_set(LED1, 1);
+    tinygl_clear();
 }
 
-void chooseCurrentShip(NumberOfShips* numberOfShips, Ship* currentShip)
+bool chooseCurrentShip(NumberOfShips* numberOfShips, Ship* currentShip)
 
 {
     if (numberOfShips->fourPoints > 0) {
         currentShip->endingPoint = 4;
         numberOfShips->fourPoints -= 1;
+        return true;
     } else if (numberOfShips->threePoints > 0) {
         currentShip->endingPoint = 3;
         numberOfShips->threePoints -= 1;
+        return true;
     } else if (numberOfShips->twoPoints > 0) {
         currentShip->endingPoint = 2;
         numberOfShips->twoPoints -= 1;
+        return true;
     } else if (numberOfShips->onePoints > 0) {
         currentShip->endingPoint = 1;
         numberOfShips->onePoints -= 1;
-    } else {
-        clearMap();
+        return true;
     }
+
+    return false;
 }
 
 int main(void)
@@ -208,12 +207,15 @@ int main(void)
     tinygl_init(LOOP_RATE);
     pacer_init(LOOP_RATE);
     button_init();
+    ir_uart_init();
+
+    uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH];
 
     NumberOfShips numberOfShips;
 
     numberOfShips.fourPoints = 2;
     numberOfShips.threePoints = 0;
-    numberOfShips.twoPoints = 0;
+    numberOfShips.twoPoints = 1;
     numberOfShips.onePoints = 0;
 
     led_set(LED1, 0);
@@ -243,10 +245,19 @@ int main(void)
 
         if (navswitch_push_event_p(NAVSWITCH_PUSH)) {
             saveShipToMap(&currentShip);
-            chooseCurrentShip(&numberOfShips, &currentShip);
+            if (!chooseCurrentShip(&numberOfShips, &currentShip)) {
+                tinygl_clear();
+                tinygl_update();
 
-            if (currentShip.endingPoint == 3) {
-                led_set(LED1, 1);
+                waitForBothPlayers(layout, opponentsMap);
+
+                if (opponentsMap[6][4] == 1) {
+                    led_set(LED1, 1);
+                }
+
+                while (1) {
+                    pacer_wait();
+                }
             }
         }
 
