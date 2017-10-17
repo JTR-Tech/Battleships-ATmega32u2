@@ -111,18 +111,18 @@ void updateDisplayArea(map_t* map)
     // these states within the "displayArea" array, to be pushed to the led
     // matrix. "Magic" numbers here are used start the for loop at LED0, relative
     // to the player position(center)
-    uint8_t start_pos_x = map->player.position.x - 3;
-    uint8_t start_pos_y = map->player.position.y - 2;
+    int start_pos_x = map->player.position.x - 3;
+    int start_pos_y = map->player.position.y - 2;
 
     // Mapping the main map to a section the size of the display
-    for (uint8_t i = 0; i < RENDER_HEIGHT && start_pos_x + i < MAP_HEIGHT; i++) {
-        for (uint8_t k = 0; k < RENDER_WIDTH && start_pos_y + k < MAP_WIDTH; k++) {
+    for (int i = 0; i < RENDER_HEIGHT && start_pos_x + i < MAP_HEIGHT; i++) {
+        for (int k = 0; k < RENDER_WIDTH && start_pos_y + k < MAP_WIDTH; k++) {
             // Either send our map or opponents map to the framebuffer depending on gameState
-            if (gameState = 0) {
+            //if (gameState == 0) {
                 map->displayArea[i][k] = layout[start_pos_x + i][start_pos_y + k];
-            } else {
-                map->displayArea[i][k] = opponentsMap[start_pos_x + i][start_pos_y + k];
-            }
+            //} else {
+             //   map->displayArea[i][k] = opponentsMap[start_pos_x + i][start_pos_y + k];
+            //}
 
         }
     }
@@ -134,7 +134,7 @@ void drawPlayer(map_t* map)
     // screen. Unless safezone is set, then we move the player in direction the
     // camera otherwise would have.
 
-    if (gameState == 0) { // placement mode
+    //if (gameState == 0) { // placement mode
         static uint8_t offset_x = 2;
         static uint8_t offset_y = 2;
 
@@ -144,13 +144,11 @@ void drawPlayer(map_t* map)
 
         // width/height of ship, essentially defining the rows/ columns the
         // sprite will consume
-        uint8_t width = map->player.currentShip.height;
-        uint8_t height = map->player.currentShip.width;
+        int width = map->player.currentShip.height;
+        int height = map->player.currentShip.width;
 
-        for (uint8_t x = 0; x < height && start_pos_x + x < MAP_HEIGHT - 1 && start_pos_x + x >= 0;
-             x++) {
-            for (uint8_t y = 0; y < width && start_pos_y + y < MAP_WIDTH - 1 && start_pos_y + y >= 0;
-                 y++) {
+        for (int x = 0; x < height && start_pos_x + x < MAP_HEIGHT - 1 && start_pos_x + x >= 0; x++) {
+            for (int y = 0; y < width && start_pos_y + y < MAP_WIDTH - 1 && start_pos_y + y >= 0; y++) {
                 // dumb drawing, magic numbers here are to align with the
                 // players position
                 tinygl_point_t tmp = {y + offset_y, x + offset_x};
@@ -161,7 +159,7 @@ void drawPlayer(map_t* map)
                 map->player.currentShip.area[x][y] = &layout[start_pos_x + x][start_pos_y + y];
             }
         }
-        updateDisplayArea(map);
+        updateDisplayArea(map);/*
     }
 
     else if (gameState == 1) {
@@ -177,15 +175,15 @@ void drawPlayer(map_t* map)
             tinygl_point_t tmp = {y + offset_y, offset_x + 1};
             tinygl_pixel_set(tmp, 1);
         }
-    }
+    }*/
 }
 
 void framebuffer(map_t* map)
 {
     // Here we take the frame stored by the updateDisplayArea function and push
     // it to the LED matrix
-    for (uint8_t i = 0; i < RENDER_HEIGHT; i++) {
-        for (uint8_t k = 0; k < RENDER_WIDTH; k++) {
+    for (int i = 0; i < RENDER_HEIGHT; i++) {
+        for (int k = 0; k < RENDER_WIDTH; k++) {
             tinygl_point_t tmp = {k, i};
             tinygl_pixel_set(tmp, map->displayArea[i][k]);
         }
@@ -200,8 +198,8 @@ void placeShip(map_t* map)
     uint8_t width = map->player.currentShip.height;
     uint8_t height = map->player.currentShip.width;
 
-    for (uint8_t i = 0; i < height; i++) {
-        for (uint8_t k = 0; k < width; k++) {
+    for (int i = 0; i < height; i++) {
+        for (int k = 0; k < width; k++) {
             int* ptr = map->player.currentShip.area[i][k];
             *ptr = 2; // this is the value ulimately drawn on the map, should be
                       // a "2"
@@ -228,11 +226,10 @@ void rotateShip(map_t* map)
 }
 
 void playerFire(map_t *map) {
-    static uint8_t x = map->player.position.x;
-    static uint8_t y = map->player.position.y;
 
-    if (opponentsMap[x][y] == 2) {
-        opponentsMap[x][y] = 3;
+
+    if (opponentsMap[map->player.position.x][map->player.position.y] == 2) {
+        opponentsMap[map->player.position.x][map->player.position.y] = 3;
         map->opponent.health--;
     }
 }
@@ -277,12 +274,12 @@ void movePlayer(map_t* map)
     }
 
     // if gameState = 0 AND navswitch is pressed in, confirm ship position
-    if (navswitch_push_event_p(NAVSWITCH_PUSH) && gameState = 0) {
+    if (navswitch_push_event_p(NAVSWITCH_PUSH) && gameState == 0) {
         placeShip(map);
     }
 
     // if gameState = 1 AND navswitch is pressed in, confirm attack
-    if (navswitch_push_event_p(NAVSWITCH_PUSH) && gameState = 1) {
+    if (navswitch_push_event_p(NAVSWITCH_PUSH) && gameState == 1) {
         placeShip(map);
     }
 
@@ -294,8 +291,8 @@ void movePlayer(map_t* map)
 
 void shipSelection(map_t* map)
 {
-    int *health = map->player.units.health;
-    int *ship = map->player.currentShip;
+    //int *health = map->player.units.health;
+    //int *ship = map->player.currentShip;
 
     // move down the conditionals until all units are placed
     if (map->player.units.noOfLargeShips > 0) {
@@ -341,26 +338,15 @@ static void recieve_task (map_t *map)
 }*/
 
 void intermission(map_t *map, uint8_t layout, uint8_t opponentsMap) {
-    if (waitForBothPlayers(layout, opponentsMap)) {
-        //if first, immediately receive map, then send
-        getOpponentsMap(uint8_t *opponentsMap);
-        calculateOpponentsTotalHealth(map);
-        sendMap(map);
-        gameState = 1;
-    } else {
-        //if second, immediately send map, then receive
-        sendMap(map);
-        getOpponentsMap(uint8_t *opponentsMap);
-        calculateOpponentsTotalHealth(map);
-        gameState = 1;
-    }
+    waitForBothPlayers(layout, opponentsMap);
+    calculateOpponentsTotalHealth(map);
 }
 
 int main(void)
 {
     // TODO: cleanup
     //int tick = 0;
-    //uint8_t ledStatus;
+    uint8_t ledStatus;
 
     map_t map;
     map.player.position.x = 4; // players initial position
