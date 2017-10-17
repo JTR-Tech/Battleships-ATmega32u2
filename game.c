@@ -1,3 +1,11 @@
+/** @file game.c
+ * @author Rafael Goesmann Joshua Aitken
+ * @date 11th October 2017
+ * @brief An interactive battleships game
+ *
+
+**/
+
 #include "../fonts/font5x7_1.h"
 #include "button.h"
 #include "ir_uart.h"
@@ -308,14 +316,15 @@ int main(void)
                 if (!chooseCurrentShip(&numberOfShips, &currentShip)) {
                     tinygl_clear();
                     tinygl_update();
-                    clearMap();
                     waitForBothPlayers(layout, opponentsMap);
 
-                    if (opponentsMap[0][0] == 1) {
-                        led_set(LED1, 1);
-                    }
+                    clearMap();
 
-                    gameState += 1;
+                    led_set(LED1, 1);
+
+                    if (opponentsMap[0][0] ==)
+
+                        gameState += 1;
                     renderCursor(&cursor, 1);
                 }
             }
