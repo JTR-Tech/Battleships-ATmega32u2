@@ -1,0 +1,59 @@
+# File:   Makefile
+# Author: M. P. Hayes, UCECE
+# Date:   11 Sep 2010
+# Descr:  Makefile for hello1
+
+CC = gcc
+CFLAGS = -Wall -Wstrict-prototypes -Wextra -g -I. -I../../drivers/test -I../../drivers -I../../utils
+
+DEL = rm
+
+# Default target.
+all: game.out
+
+
+# Compile: create object files from C source files.
+# 
+game.o: game.c  ../../drivers/test/system.h ../../drivers/ledmat.h ../../utils/pacer.h ../../drivers/test/ir_uart.h 
+	$(CC) -c $(CFLAGS) $< -o $@
+	
+mgetkey-test.o: ../../drivers/test/mgetkey.c ../../drivers/test/mgetkey.h
+	$(CC) -c $(CFLAGS) $< -o $@
+
+pio.o: ../../drivers/test/pio.c ../../drivers/test/pio.h ../../drivers/test/system.h
+	$(CC) -c $(CFLAGS) $< -o $@
+
+system.o: ../../drivers/test/system.c ../../drivers/test/system.h ../../drivers/test/mgetkey.h
+	$(CC) -c $(CFLAGS) $< -o $@
+
+timer.o: ../../drivers/test/timer.c ../../drivers/test/system.h ../../drivers/test/timer.h
+	$(CC) -c $(CFLAGS) $< -o $@
+
+ledmat.o: ../../drivers/ledmat.c ../../drivers/test/pio.h ../../drivers/test/system.h ../../drivers/ledmat.h
+	$(CC) -c $(CFLAGS) $< -o $@
+
+pacer.o: ../../utils/pacer.c ../../drivers/test/system.h ../../drivers/test/timer.h ../../utils/pacer.h
+	$(CC) -c $(CFLAGS) $< -o $@
+
+navswitch.o: ../../drivers/navswitch.c ../../drivers/test/delay.h ../../drivers/test/pio.h ../../drivers/test/system.h ../../drivers/navswitch.h
+	$(CC) -c $(CFLAGS) $< -o $@
+	
+led.o: ../../drivers/led.c ../../drivers/test/pio.h ../../drivers/test/system.h ../../drivers/led.h
+	$(CC) -c $(CFLAGS) $< -o $@
+
+tinygl.o: ../../utils/tinygl.c ../../drivers/test/system.h ../../drivers/display.h ../../utils/font.h ../../utils/tinygl.h
+	$(CC) -c $(CFLAGS) $< -o $@
+	
+display.o: ../../drivers/display.c ../../drivers/test/system.h ../../drivers/display.h ../../drivers/ledmat.h
+	$(CC) -c $(CFLAGS) $< -o $@
+	
+button.o: ../../drivers/button.c ../../drivers/test/system.h
+	$(CC) -c $(CFLAGS) $< -o $@
+	
+font.o: ../../utils/font.c ../../drivers/test/system.h ../../utils/font.h
+	$(CC) -c $(CFLAGS) $< -o $@
+
+
+# Link: create output file (executable) from object files.
+game.out: game.o button.o font.o display.o pio.o tinygl.o system.o led.o timer.o navswitch.o ledmat.o pacer.o timer.o mgetkey-test.o
+	$(CC) $(CFLAGS) $^ -o $@ -lrt

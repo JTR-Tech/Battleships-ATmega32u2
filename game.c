@@ -34,34 +34,39 @@ typedef struct ship_s {
     uint8_t otherAxis;
 } Ship;
 
-Ship ships[] = {{1, 4, VERT, 2}};
+typedef struct num_of_ships_s {
+    uint8_t fourPoints;
+    uint8_t threePoints;
+    uint8_t twoPoints;
+    uint8_t onePoints;
+} NumberOfShips;
 
 uint8_t layout[RENDER_HEIGHT][RENDER_WIDTH] = {
-    {1, 0, 1, 0, 0},
+    {0, 0, 0, 0, 0},
 
-    {1, 1, 1, 1, 0},
+    {0, 0, 0, 0, 0},
 
-    {1, 0, 1, 0, 0},
+    {0, 0, 0, 0, 0},
 
-    {1, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0},
 
-    {1, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0},
 
-    {1, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0},
 
-    {1, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0},
 };
 
 void printOrClearShip(Ship* ship, bool printShip)
 {
     if (ship->direction == VERT) {
-        for (uint8_t i = ships->startingPoint; i <= ship->endingPoint; i++) {
-            tinygl_point_t p = {ships->otherAxis, i};
+        for (uint8_t i = ship->startingPoint; i <= ship->endingPoint; i++) {
+            tinygl_point_t p = {ship->otherAxis, i};
             tinygl_draw_point(p, printShip ? 1 : 0);
         }
     } else {
-        for (uint8_t i = ships->startingPoint; i <= ship->endingPoint; i++) {
-            tinygl_point_t p = {i, ships->otherAxis};
+        for (uint8_t i = ship->startingPoint; i <= ship->endingPoint; i++) {
+            tinygl_point_t p = {i, ship->otherAxis};
             tinygl_draw_point(p, printShip ? 1 : 0);
         }
     }
@@ -127,11 +132,11 @@ void moveShip(Ship* ship)
 void saveShipToMap(Ship* ship)
 {
     if (ship->direction == VERT) {
-        for (int i = ships->startingPoint; i <= ship->endingPoint; i++) {
+        for (int i = ship->startingPoint; i <= ship->endingPoint; i++) {
             layout[i][ship->otherAxis] = 1;
         }
     } else {
-        for (int i = ships->startingPoint; i <= ship->endingPoint; i++) {
+        for (int i = ship->startingPoint; i <= ship->endingPoint; i++) {
             layout[ship->otherAxis][i] = 1;
         }
     }
@@ -158,9 +163,39 @@ void printLayout(void)
 {
     for (int i = 0; i < RENDER_WIDTH; i++) {
         for (int j = 0; j < RENDER_HEIGHT; j++) {
-            tinygl_point_t p = {j, i};
+            tinygl_point_t p = {i, j};
             tinygl_draw_point(p, layout[j][i]);
         }
+    }
+}
+
+void clearMap()
+{
+    for (int i = 0; i < RENDER_WIDTH; i++) {
+        for (int j = 0; j < RENDER_HEIGHT; j++) {
+            tinygl_point_t p = {i, j};
+            tinygl_draw_point(p, 0);
+        }
+    }
+}
+
+void chooseCurrentShip(NumberOfShips* numberOfShips, Ship* currentShip)
+
+{
+    if (numberOfShips->fourPoints > 0) {
+        currentShip->endingPoint = 4;
+        numberOfShips->fourPoints -= 1;
+    } else if (numberOfShips->threePoints > 0) {
+        currentShip->endingPoint = 3;
+        numberOfShips->threePoints -= 1;
+    } else if (numberOfShips->twoPoints > 0) {
+        currentShip->endingPoint = 2;
+        numberOfShips->twoPoints -= 1;
+    } else if (numberOfShips->onePoints > 0) {
+        currentShip->endingPoint = 1;
+        numberOfShips->onePoints -= 1;
+    } else {
+        clearMap();
     }
 }
 
@@ -174,7 +209,22 @@ int main(void)
     pacer_init(LOOP_RATE);
     button_init();
 
+    NumberOfShips numberOfShips;
+
+    numberOfShips.fourPoints = 2;
+    numberOfShips.threePoints = 0;
+    numberOfShips.twoPoints = 0;
+    numberOfShips.onePoints = 0;
+
     led_set(LED1, 0);
+
+    Ship currentShip;
+
+    currentShip.startingPoint = 1;
+    currentShip.otherAxis = 2;
+    currentShip.direction = VERT;
+
+    chooseCurrentShip(&numberOfShips, &currentShip);
 
     /* Paced loop.  */
     while (1) {
@@ -183,15 +233,21 @@ int main(void)
         button_update();
 
         if (button_push_event_p(BUTTON1)) {
-            rotateShip(&ships[0]);
+            rotateShip(&currentShip);
         }
 
         printLayout();
 
-        moveShip(&ships[0]);
-        printOrClearShip(&ships[0], 1);
+        moveShip(&currentShip);
+        printOrClearShip(&currentShip, 1);
 
         if (navswitch_push_event_p(NAVSWITCH_PUSH)) {
+            saveShipToMap(&currentShip);
+            chooseCurrentShip(&numberOfShips, &currentShip);
+
+            if (currentShip.endingPoint == 3) {
+                led_set(LED1, 1);
+            }
         }
 
         tinygl_update();
