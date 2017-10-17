@@ -13,7 +13,6 @@
 #define MAP_EMPTY '0'
 #define MAP_BORDER '1'
 #define MAP_USER_SHIP '2'
-#define MAP_OPPONENT_SHIP '3'
 
 /*
     Will send the 'USER_IS_READY' message along with the map contents to the
@@ -40,12 +39,6 @@ static void insertIntoOpponentsMap(uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH],
                                    char returnedChar, uint8_t* currentWidth,
                                    uint8_t* currentHeight, bool* notProcessing)
 {
-    // If the returned char is of type 'USER_SHIP', then change it to
-    // 'OPPONENT_SHIP'
-    if (returnedChar == MAP_USER_SHIP) {
-        returnedChar = MAP_OPPONENT_SHIP;
-    }
-
     // Insert the returnedChar at the current coordinate an an int
     // representation of the char
     opponentsMap[*currentHeight][*currentWidth] = returnedChar - '0';
