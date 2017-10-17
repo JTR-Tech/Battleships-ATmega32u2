@@ -3,8 +3,7 @@
  * @date 11th October 2017
  * @brief An interactive battleships game
  *
-
-**/
+ **/
 
 #include "../fonts/font5x7_1.h"
 #include "button.h"
@@ -228,14 +227,10 @@ void moveAndClickCursor(Cursor* cursor,
 {
 
     if (navswitch_push_event_p(NAVSWITCH_PUSH)) {
-        /*
         if (opponentsMap[cursor->y][cursor->x]) {
             led_set(LED1, 1);
             layout[cursor->y][cursor->x] = 1;
         }
-        */
-
-        layout[cursor->y][cursor->x] = 1;
     }
 
     if (navswitch_push_event_p(NAVSWITCH_NORTH) && cursor->y > 0) {
@@ -270,8 +265,6 @@ int main(void)
     pacer_init(LOOP_RATE);
     button_init();
     ir_uart_init();
-
-    bool goneYet = false;
 
     Cursor cursor = {2, 2};
 
@@ -320,11 +313,11 @@ int main(void)
 
                     clearMap();
 
-                    led_set(LED1, 1);
+                    if (opponentsMap[0][0] == 1) {
+                        led_set(LED1, 1);
+                    }
 
-                    if (opponentsMap[0][0] ==)
-
-                        gameState += 1;
+                    gameState += 1;
                     renderCursor(&cursor, 1);
                 }
             }
@@ -340,17 +333,6 @@ int main(void)
                     }
                 }
             }
-
-            /*
-            if (isUserDoneWithRound()) {
-                goneYet = false;
-            }
-
-            if (!goneYet) {
-                goneYet = true;
-            }
-
-            */
         }
 
         tinygl_update();
