@@ -118,11 +118,11 @@ void updateDisplayArea(map_t* map)
     for (int i = 0; i < RENDER_HEIGHT && start_pos_x + i < MAP_HEIGHT; i++) {
         for (int k = 0; k < RENDER_WIDTH && start_pos_y + k < MAP_WIDTH; k++) {
             // Either send our map or opponents map to the framebuffer depending on gameState
-            //if (gameState == 0) {
+            if (gameState == 0) {
                 map->displayArea[i][k] = layout[start_pos_x + i][start_pos_y + k];
-            //} else {
-             //   map->displayArea[i][k] = opponentsMap[start_pos_x + i][start_pos_y + k];
-            //}
+            } else {
+                map->displayArea[i][k] = opponentsMap[start_pos_x + i][start_pos_y + k];
+            }
 
         }
     }
@@ -134,7 +134,7 @@ void drawPlayer(map_t* map)
     // screen. Unless safezone is set, then we move the player in direction the
     // camera otherwise would have.
 
-    //if (gameState == 0) { // placement mode
+    if (gameState == 0) { // placement mode
         static uint8_t offset_x = 2;
         static uint8_t offset_y = 2;
 
@@ -159,7 +159,7 @@ void drawPlayer(map_t* map)
                 map->player.currentShip.area[x][y] = &layout[start_pos_x + x][start_pos_y + y];
             }
         }
-        updateDisplayArea(map);/*
+        updateDisplayArea(map);
     }
 
     else if (gameState == 1) {
@@ -175,7 +175,7 @@ void drawPlayer(map_t* map)
             tinygl_point_t tmp = {y + offset_y, offset_x + 1};
             tinygl_pixel_set(tmp, 1);
         }
-    }*/
+    }
 }
 
 void framebuffer(map_t* map)
@@ -359,7 +359,7 @@ int main(void)
 
     shipSelection(&map);
     updateDisplayArea(&map);
-    led_set(LED1, 0);
+
     ledStatus = 0;
 
     // library init
@@ -370,6 +370,9 @@ int main(void)
     tinygl_init(LOOP_RATE);
     drawPlayer(&map);
     pacer_init(LOOP_RATE);
+    ir_uart_init();
+
+    led_set(LED1, 0);
 
     /* Paced loop.  */
     while (1) {
