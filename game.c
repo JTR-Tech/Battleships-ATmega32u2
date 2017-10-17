@@ -55,8 +55,6 @@ typedef struct cursor_s {
 } Cursor;
 
 uint8_t layout[MAP_HEIGHT][MAP_WIDTH] = {
-    {1, 0, 0, 0, 0},
-
     {0, 0, 0, 0, 0},
 
     {0, 0, 0, 0, 0},
@@ -67,7 +65,9 @@ uint8_t layout[MAP_HEIGHT][MAP_WIDTH] = {
 
     {0, 0, 0, 0, 0},
 
-    {0, 0, 0, 0, 1},
+    {0, 0, 0, 0, 0},
+
+    {0, 0, 0, 0, 0},
 };
 
 void printOrClearShip(Ship* ship, bool printShip)
@@ -223,13 +223,16 @@ void renderCursor(Cursor* cursor, bool isFull)
 }
 
 void moveAndClickCursor(Cursor* cursor,
-                        uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH])
+                        uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH],
+                        bool* userDone)
 {
 
-    if (navswitch_push_event_p(NAVSWITCH_PUSH)) {
+    if (navswitch_push_event_p(NAVSWITCH_PUSH) && *userDone == false) {
         if (opponentsMap[cursor->y][cursor->x]) {
-            led_set(LED1, 1);
             layout[cursor->y][cursor->x] = 1;
+            *userDone = true;
+            userDoneWithRound();
+            led_set(LED1, 0);
         }
     }
 
@@ -270,6 +273,8 @@ int main(void)
 
     uint8_t gameState = 0;
     uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH];
+
+    bool userDone = false;
 
     NumberOfShips numberOfShips;
 
@@ -323,7 +328,7 @@ int main(void)
             }
         } else if (gameState == 1) {
 
-            moveAndClickCursor(&cursor, opponentsMap);
+            moveAndClickCursor(&cursor, opponentsMap, &userDone);
 
             for (uint8_t i = 0; i < MAP_WIDTH; i++) {
                 for (uint8_t j = 0; j < MAP_HEIGHT; j++) {
@@ -332,6 +337,11 @@ int main(void)
                         tinygl_draw_point(p, 1);
                     }
                 }
+            }
+
+            if (isUserDoneWithRound()) {
+                led_set(LED1, 1);
+                userDone = false;
             }
         }
 
