@@ -119,7 +119,7 @@ bool waitForBothPlayers(uint8_t usersMap[MAP_HEIGHT][MAP_WIDTH],
             } else if ((returnedChar == MAP_EMPTY ||
                         returnedChar == MAP_BORDER ||
                         returnedChar == MAP_USER_SHIP) &&
-                       currentHeight != 11) {
+                       currentHeight != MAP_HEIGHT) {
 
                 // Insert into opponents map and update indexes accordingly
                 insertIntoOpponentsMap(opponentsMap, returnedChar,
