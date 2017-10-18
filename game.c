@@ -95,6 +95,7 @@ void moveShip(Ship* ship)
                 ship->endingPoint -= 1;
             }
         } else {
+
             if (ship->otherAxis > 0) {
                 ship->otherAxis -= 1;
             }
@@ -230,6 +231,10 @@ void moveAndClickCursor(Cursor* cursor,
     if (navswitch_push_event_p(NAVSWITCH_PUSH) && *userDone == false) {
         if (opponentsMap[cursor->y][cursor->x]) {
             layout[cursor->y][cursor->x] = 1;
+            *userDone = true;
+            userDoneWithRound();
+            led_set(LED1, 0);
+        } else {
             *userDone = true;
             userDoneWithRound();
             led_set(LED1, 0);
