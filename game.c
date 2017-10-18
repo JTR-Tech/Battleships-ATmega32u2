@@ -1,5 +1,6 @@
 #include "../fonts/font5x7_1.h"
 #include "button.h"
+#include "ircommunication.h"
 #include "led.h"
 #include "navswitch.h"
 #include "pacer.h"
@@ -7,7 +8,6 @@
 #include "system.h"
 #include "tinygl.h"
 #include <stdio.h>
-#include "ircommunication.h"
 
 /* Define polling rate in Hz.  */
 #define LOOP_RATE 300
@@ -48,13 +48,12 @@ struct opponent {
 };
 typedef struct opponent opponent_t;
 
-
 // defining ship size
 struct ship {
     uint8_t height;
     uint8_t width;
     uint8_t direction;   // 0 = horz 1 = vert
-    uint8_t* area[4][4]; // this should be allocated dynamically/ or drawPlayer
+    uint8_t *area[4][4]; // this should be allocated dynamically/ or drawPlayer
                          // breaks on null terminator
 };
 typedef struct ship ship_t;
@@ -104,31 +103,33 @@ void calculateOpponentsTotalHealth(map_t *map)
     }
 }
 
-void updateDisplayArea(map_t* map)
+void updateDisplayArea(map_t *map)
 {
     // This function checks the state of each cell in the map, relative to the
     // player, as many cells as can be displayed  On the LED matix and stores
     // these states within the "displayArea" array, to be pushed to the led
-    // matrix. "Magic" numbers here are used start the for loop at LED0, relative
-    // to the player position(center)
+    // matrix. "Magic" numbers here are used start the for loop at LED0,
+    // relative to the player position(center)
     int start_pos_x = map->player.position.x - 3;
     int start_pos_y = map->player.position.y - 2;
 
     // Mapping the main map to a section the size of the display
     for (int i = 0; i < RENDER_HEIGHT && start_pos_x + i < MAP_HEIGHT; i++) {
         for (int k = 0; k < RENDER_WIDTH && start_pos_y + k < MAP_WIDTH; k++) {
-            // Either send our map or opponents map to the framebuffer depending on gameState
+            // Either send our map or opponents map to the framebuffer depending
+            // on gameState
             if (gameState == 0) {
-                map->displayArea[i][k] = layout[start_pos_x + i][start_pos_y + k];
+                map->displayArea[i][k] =
+                    layout[start_pos_x + i][start_pos_y + k];
             } else {
-                map->displayArea[i][k] = opponentsMap[start_pos_x + i][start_pos_y + k];
+                map->displayArea[i][k] =
+                    opponentsMap[start_pos_x + i][start_pos_y + k];
             }
-
         }
     }
 }
 
-void drawPlayer(map_t* map)
+void drawPlayer(map_t *map)
 {
     // This function is tasked with rendering player, usually center of the
     // screen. Unless safezone is set, then we move the player in direction the
@@ -147,8 +148,12 @@ void drawPlayer(map_t* map)
         int width = map->player.currentShip.height;
         int height = map->player.currentShip.width;
 
-        for (int x = 0; x < height && start_pos_x + x < MAP_HEIGHT - 1 && start_pos_x + x >= 0; x++) {
-            for (int y = 0; y < width && start_pos_y + y < MAP_WIDTH - 1 && start_pos_y + y >= 0; y++) {
+        for (int x = 0; x < height && start_pos_x + x < MAP_HEIGHT - 1 &&
+                        start_pos_x + x >= 0;
+             x++) {
+            for (int y = 0; y < width && start_pos_y + y < MAP_WIDTH - 1 &&
+                            start_pos_y + y >= 0;
+                 y++) {
                 // dumb drawing, magic numbers here are to align with the
                 // players position
                 tinygl_point_t tmp = {y + offset_y, x + offset_x};
@@ -156,7 +161,8 @@ void drawPlayer(map_t* map)
                 // TODO: ensure that placement happens within the boarders of
                 // the map here we basically store the addresses of the map
                 // cells of which our ship is placed overtop. to be used later.
-                map->player.currentShip.area[x][y] = &layout[start_pos_x + x][start_pos_y + y];
+                map->player.currentShip.area[x][y] =
+                    &layout[start_pos_x + x][start_pos_y + y];
             }
         }
         updateDisplayArea(map);
@@ -178,7 +184,7 @@ void drawPlayer(map_t* map)
     }
 }
 
-void framebuffer(map_t* map)
+void framebuffer(map_t *map)
 {
     // Here we take the frame stored by the updateDisplayArea function and push
     // it to the LED matrix
@@ -190,7 +196,7 @@ void framebuffer(map_t* map)
     }
 }
 
-void placeShip(map_t* map)
+void placeShip(map_t *map)
 {
     // on navswtich press, use the pointers stored in currentShip.area to modify
     // the map
@@ -200,7 +206,7 @@ void placeShip(map_t* map)
 
     for (int i = 0; i < height; i++) {
         for (int k = 0; k < width; k++) {
-            int* ptr = map->player.currentShip.area[i][k];
+            int *ptr = map->player.currentShip.area[i][k];
             *ptr = 2; // this is the value ulimately drawn on the map, should be
                       // a "2"
         }
@@ -212,7 +218,7 @@ void placeShip(map_t* map)
     drawPlayer(map);
 }
 
-void rotateShip(map_t* map)
+void rotateShip(map_t *map)
 {
     // Simply swap currentShip.height and currentShip.width
     uint8_t tmp = map->player.currentShip.width;
@@ -225,8 +231,8 @@ void rotateShip(map_t* map)
     drawPlayer(map);
 }
 
-void playerFire(map_t *map) {
-
+void playerFire(map_t *map)
+{
 
     if (opponentsMap[map->player.position.x][map->player.position.y] == 2) {
         opponentsMap[map->player.position.x][map->player.position.y] = 3;
@@ -234,7 +240,7 @@ void playerFire(map_t *map) {
     }
 }
 
-void movePlayer(map_t* map)
+void movePlayer(map_t *map)
 {
     // This function moves the player in the direction of the navswtich, really
     // we're manipulating the "camera"
@@ -249,7 +255,8 @@ void movePlayer(map_t* map)
         drawPlayer(map);
     }
 
-    if (navswitch_push_event_p(NAVSWITCH_EAST) && map->player.position.y < MAP_WIDTH - 1) {
+    if (navswitch_push_event_p(NAVSWITCH_EAST) &&
+        map->player.position.y < MAP_WIDTH - 1) {
         map->player.position.y++;
         updateDisplayArea(map);
 
@@ -265,7 +272,8 @@ void movePlayer(map_t* map)
         drawPlayer(map);
     }
 
-    if (navswitch_push_event_p(NAVSWITCH_SOUTH) && map->player.position.x < MAP_HEIGHT - 1) {
+    if (navswitch_push_event_p(NAVSWITCH_SOUTH) &&
+        map->player.position.x < MAP_HEIGHT - 1) {
         map->player.position.x++;
         updateDisplayArea(map);
 
@@ -289,31 +297,31 @@ void movePlayer(map_t* map)
     }
 }
 
-void shipSelection(map_t* map)
+void shipSelection(map_t *map)
 {
-    //int *health = map->player.units.health;
-    //int *ship = map->player.currentShip;
+    // int *health = map->player.units.health;
+    // int *ship = map->player.currentShip;
 
     // move down the conditionals until all units are placed
     if (map->player.units.noOfLargeShips > 0) {
         map->player.units.noOfLargeShips--;
         map->player.currentShip.height = 2;
         map->player.currentShip.width = 4;
-        //health = health + (ship.height * ship.width);
+        // health = health + (ship.height * ship.width);
     }
 
     else if (map->player.units.noOfMediumShips > 0) {
         map->player.units.noOfMediumShips--;
         map->player.currentShip.height = 1;
         map->player.currentShip.width = 3;
-        //health = health + (ship.height * ship.width);
+        // health = health + (ship.height * ship.width);
     }
 
     else if (map->player.units.noOfSmallShips > 0) {
         map->player.units.noOfSmallShips--;
         map->player.currentShip.height = 1;
         map->player.currentShip.width = 2;
-        //health = health + (ship.height * ship.width);
+        // health = health + (ship.height * ship.width);
     }
     // At this point all ships are placed, start game
     else {
@@ -337,7 +345,8 @@ static void recieve_task (map_t *map)
     //getData
 }*/
 
-void intermission(map_t *map, uint8_t layout, uint8_t opponentsMap) {
+void intermission(map_t *map, uint8_t layout, uint8_t opponentsMap)
+{
     waitForBothPlayers(layout, opponentsMap);
     calculateOpponentsTotalHealth(map);
 }
@@ -345,7 +354,7 @@ void intermission(map_t *map, uint8_t layout, uint8_t opponentsMap) {
 int main(void)
 {
     // TODO: cleanup
-    //int tick = 0;
+    // int tick = 0;
     uint8_t ledStatus;
 
     map_t map;
