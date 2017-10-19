@@ -31,7 +31,7 @@
 #define PLAYER_START_POS_X 4
 #define PLAYER_START_POS_Y 6
 
-// 0 = placingships, 1 = players turn, 3 = player waiting TODO: use it
+// 0 = placingships, 1 = players turn, 3 = player waiting 
 uint8_t gameState = 0;
 
 // below is a simple "map", 1's indicating LED(on), 0's indicating LED(off). If
@@ -97,7 +97,6 @@ struct player {
 };
 typedef struct player player_t;
 
-// TODO: fix this terrible struct naming
 struct map {
     // heres where the display frame is stored
     uint8_t displayArea[RENDER_HEIGHT][RENDER_WIDTH];
