@@ -1,15 +1,22 @@
+/** @file  ircommunication.c
+    @author Rafael Goesmann Joshua Aitken
+    @date   11th October 2017
+
+    Purpose: This module handles everything to do with ir sending and receiving.
+*/
+
 #include "ir_uart.h"
 #include "led.h"
 #include "navswitch.h"
 #include "pacer.h"
 #include "system.h"
 
-// Characters that will be sent with ir_uart_putc()
+#define MAP_WIDTH 15
+#define MAP_HEIGHT 11
+// 'Magic Number' characters that will be sent with ir_uart_putc()
 #define USER_IS_READY 'r'
 #define DONE_MESSAGE 'd'
 #define USER_HIT 'h'
-#define MAP_WIDTH 15
-#define MAP_HEIGHT 11
 #define MAP_EMPTY '0'
 #define MAP_BORDER '1'
 #define MAP_USER_SHIP '2'
@@ -20,8 +27,12 @@
 */
 static void sendReadyAndMap(uint8_t usersMap[MAP_HEIGHT][MAP_WIDTH])
 {
-    // Send messsage to opponent telling them that you have pressed the
-    // button
+
+    /*
+    Send messsage to opponent telling them that you have pressed the
+    button
+    */
+
     ir_uart_putc(USER_IS_READY);
 
     for (int i = 0; i < MAP_HEIGHT; i++) {
@@ -36,8 +47,8 @@ static void sendReadyAndMap(uint8_t usersMap[MAP_HEIGHT][MAP_WIDTH])
     Inserts the returned char into the opponentsMap as an integer
 */
 static void insertIntoOpponentsMap(uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH],
-                                   char returnedChar, uint8_t* currentWidth,
-                                   uint8_t* currentHeight, bool* notProcessing)
+                                   char returnedChar, uint8_t *currentWidth,
+                                   uint8_t *currentHeight, bool *notProcessing)
 {
     // Insert the returnedChar at the current coordinate an an int
     // representation of the char
@@ -51,6 +62,7 @@ static void insertIntoOpponentsMap(uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH],
         // If the currentHeight is 11, then transmission is complete
         if (*currentHeight == 11) {
             led_set(LED1, 1);
+            // Notify function that user is not processing opponentsMap
             *notProcessing = true;
         }
     } else {
@@ -107,13 +119,17 @@ bool waitForBothPlayers(uint8_t usersMap[MAP_HEIGHT][MAP_WIDTH],
             } else if ((returnedChar == MAP_EMPTY ||
                         returnedChar == MAP_BORDER ||
                         returnedChar == MAP_USER_SHIP) &&
-                       currentHeight != 11) {
+                       currentHeight != MAP_HEIGHT) {
 
+                // Insert into opponents map and update indexes accordingly
                 insertIntoOpponentsMap(opponentsMap, returnedChar,
                                        &currentWidth, &currentHeight,
                                        &notProcessing);
             }
         }
+
+        // If user and opponent have pressed navswitch and user is not
+        // processing opponents map, then return
 
         if (userReady && opponentReady && notProcessing) {
             return goesFirst;

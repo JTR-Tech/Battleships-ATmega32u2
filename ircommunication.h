@@ -1,4 +1,9 @@
-#include "tinygl.h"
+/** @file  ircommunication.h
+    @author Rafael Goesmann Joshua Aitken
+    @date   10th October 2017
+
+    Purpose: Contains public functions signatures from ircommunication.c
+*/
 
 #ifndef IRCOMMUNICATION_H
 #define IRCOMMUNICATION_H
@@ -6,13 +11,16 @@
 #define MAP_WIDTH 15
 #define MAP_HEIGHT 11
 
-/* Will block until both players have pressed the NAVSWITCH_PUSH button.
-   Will return true if user pressed first otherwise it will return false*/
+/*
+    Will block until both players have pressed the NAVSWITCH_PUSH button.
+    Will return true if user pressed first otherwise it will return false
+*/
 bool waitForBothPlayers(uint8_t usersMap[MAP_HEIGHT][MAP_WIDTH],
                         uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH]);
 
-/* Call this after user has finished their round.
-   Will notify the opponent that their turn has finished
+/*
+    Call this after user has finished their round.
+    Will notify the opponent that their turn has finished
 */
 void userDoneWithRound(void);
 
@@ -21,15 +29,5 @@ void userDoneWithRound(void);
     Call this function while user is currently waiting for their round
 */
 bool isUserDoneWithRound(void);
-
-/*
-    Send the contents of the the users layout to the opponent
-*/
-void sendMap(uint8_t map[MAP_HEIGHT][MAP_WIDTH]);
-
-/*
-    Will block until it has retrieved the opponents map
-*/
-void getOpponentsMap(uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH]);
 
 #endif

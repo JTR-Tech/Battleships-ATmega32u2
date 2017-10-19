@@ -1,4 +1,3 @@
-//#include "../fonts/font5x7_1.h"
 #include "button.h"
 #include "led.h"
 #include "navswitch.h"
@@ -7,7 +6,6 @@
 #include "system.h"
 #include "tinygl.h"
 #include <stdio.h>
-#include "task.h"
 #include "ir_uart.h"
 #include "ircommunication.h"
 
@@ -99,7 +97,9 @@ struct player {
 };
 typedef struct player player_t;
 
+// TODO: fix this terrible struct naming
 struct map {
+    // heres where the display frame is stored
     uint8_t displayArea[RENDER_HEIGHT][RENDER_WIDTH];
     player_t player;
     opponent_t opponent;
@@ -235,6 +235,7 @@ void placeShip(map_t* map)
         }
     }
     shipSelection(map);
+    // refresh the screen immediately
     updateDisplayArea(map);
     framebuffer(map);
     drawPlayer(map);
@@ -252,7 +253,8 @@ void rotateShip(map_t* map)
     drawPlayer(map);
 }
 
-void playerFire(map_t *map) {
+void playerFire(map_t *map) 
+{
     if (opponentsMap[map->player.position.x][map->player.position.y] == 2) {
         opponentsMap[map->player.position.x][map->player.position.y] = 3;
         map->opponent.health--;
