@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include "task.h"
 #include "ir_uart.h"
+#include "ircommunication.h"
 
 /* Define polling rate in Hz.  */
 #define LOOP_RATE 300
@@ -311,6 +312,10 @@ void movePlayer(map_t* map)
     }
 }
 
+void intermission( void ) {
+    waitForBothPlayers(layout, opponentsMap);
+}
+
 int main(void)
 {
 
@@ -337,6 +342,10 @@ int main(void)
         pacer_wait();
         navswitch_update();
         button_update();
+        //Start Map trade and progress with game
+        if (gameState == 1) {
+            intermission();
+        }
         movePlayer(&map);
         tinygl_update();
     }

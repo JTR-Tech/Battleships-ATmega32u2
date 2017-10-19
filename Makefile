@@ -15,6 +15,9 @@ all: game.out
 game.o: game.c ../../drivers/avr/system.h ../../drivers/ledmat.h ../../utils/pacer.h ../../drivers/avr/ir_uart.h 
 	$(CC) -c $(CFLAGS) $< -o $@
 
+ircommunication.o: ./ircommunication.c ../../drivers/avr/system.h ../../drivers/navswitch.h ../../utils/pacer.h ../../drivers/avr/ir_uart.h ../../drivers/led.h ../../utils/pacer.h
+
+
 ir_uart.o: ../../drivers/avr/ir_uart.c ../../drivers/avr/ir_uart.h ../../drivers/avr/pio.h ../../drivers/avr/system.h ../../drivers/avr/timer0.h ../../drivers/avr/usart1.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
@@ -66,7 +69,7 @@ task.o: ../../utils/task.c ../../drivers/avr/system.h ../../drivers/avr/timer.h 
 
 
 # Link: create output file (executable) from object files.
-game.out: game.o button.o font.o display.o pio.o tinygl.o system.o led.o timer.o navswitch.o ledmat.o pacer.o ir_uart.o  timer0.o usart1.o prescale.o task.o
+game.out: game.o button.o font.o display.o pio.o tinygl.o system.o led.o timer.o navswitch.o ledmat.o pacer.o ir_uart.o  timer0.o usart1.o prescale.o task.o ircommunication.o
 	$(CC) $(CFLAGS) $^ -o $@ -lm
 	$(SIZE) $@
 
