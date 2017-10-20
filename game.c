@@ -135,11 +135,12 @@ void shipSelection(map_t *map)
 }
 
 /**
- *    This function checks the state of each cell in the map, relative to the
+ *   This function checks the state of each cell in the map, relative to the
  *   player, as many cells as can be displayed  On the LED matix and stores
  *   these states within the "displayArea" array, to be pushed to the led
  *   matrix. "Magic" numbers here are used start the for loop at LED0,
  *   relative to the player position(center)
+ *
  *   @param map pointer to map that contains the display area and player
  */
 void updateDisplayArea(map_t *map)
@@ -221,10 +222,15 @@ void drawPlayer(map_t *map)
     }
 }
 
+
+/**
+ * Here we take the frame stored by the updateDisplayArea function and push
+ * it to the LED matrix
+ *
+ * @param map pointer to the map that contains display area
+ */
 void framebuffer(map_t *map)
 {
-    // Here we take the frame stored by the updateDisplayArea function and push
-    // it to the LED matrix
     for (int i = 0; i < RENDER_HEIGHT; i++) {
         for (int k = 0; k < RENDER_WIDTH; k++) {
             tinygl_point_t tmp = {k, i};
@@ -233,11 +239,14 @@ void framebuffer(map_t *map)
     }
 }
 
+/**
+ * on navswtich press, use the pointers stored in currentShip.area to modify
+ * the map
+ *
+ * @param map pointer to the map that contains ship location
+ */
 void placeShip(map_t *map)
 {
-    // on navswtich press, use the pointers stored in currentShip.area to modify
-    // the map
-
     uint8_t width = map->player.currentShip.height;
     uint8_t height = map->player.currentShip.width;
 
@@ -253,9 +262,13 @@ void placeShip(map_t *map)
     drawPlayer(map);
 }
 
+/**
+ * Simply swap currentShip.height and currentShip.width
+ *
+ * @param map pointer to the map that contains ship location
+ */
 void rotateShip(map_t *map)
 {
-    // Simply swap currentShip.height and currentShip.width
     uint8_t tmp = map->player.currentShip.width;
     map->player.currentShip.width = map->player.currentShip.height;
     map->player.currentShip.height = tmp;
@@ -273,11 +286,14 @@ void playerFire(map_t *map)
     }
 }
 
+/**
+ * This function moves the player in the direction of the navswtich, really
+ * we're manipulating the "camera"
+ *
+ * @param map pointer to the map that contains the players x/y position
+ */
 void movePlayer(map_t *map)
 {
-    // This function moves the player in the direction of the navswtich, really
-    // we're manipulating the "camera"
-
     if (navswitch_push_event_p(NAVSWITCH_WEST) && map->player.position.y > 0) {
         map->player.position.y--;
         updateDisplayArea(map);
@@ -328,6 +344,9 @@ void movePlayer(map_t *map)
     }
 }
 
+/**
+ * Trade maps wth other player
+ */
 void intermission(void)
 {
     waitForBothPlayers(layout, opponentsMap);
