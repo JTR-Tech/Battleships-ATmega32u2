@@ -1,8 +1,7 @@
 /** @file  ircommunication.c
-    @author Rafael Goesmann Joshua Aitken
+    @author Rafael Goesmann (rgo51) Joshua Aitken (ajo107)
     @date   11th October 2017
-
-    Purpose: This module handles everything to do with ir sending and receiving.
+    @brief This module handles everything to do with ir sending and receiving.
 */
 
 #include "ir_uart.h"
@@ -21,10 +20,14 @@
 #define MAP_BORDER '1'
 #define MAP_USER_SHIP '2'
 
-/*
-    Will send the 'USER_IS_READY' message along with the map contents to the
-   opponent
-*/
+/**
+ * Will send the 'USER_IS_READY' message along with the map contents to the
+ * opponent
+ *
+ * @param usersMap The layout of the placed battleships from the user.
+ * '0' signifies empty space, '1' signifies terrain and '2' signifies
+ * part of a users ship
+ */
 static void sendReadyAndMap(uint8_t usersMap[MAP_HEIGHT][MAP_WIDTH])
 {
 
@@ -43,9 +46,16 @@ static void sendReadyAndMap(uint8_t usersMap[MAP_HEIGHT][MAP_WIDTH])
     }
 }
 
-/*
-    Inserts the returned char into the opponentsMap as an integer
-*/
+/**
+ * Inserts the returned char into the opponentsMap as an integer
+ * @param opponentsMap Will insert the `returnedChar` as an integer into this
+ * matrix
+ * @param returnedChar Received char from the opponents map
+ * @param currentWidth Pointer to the current width in the matrix
+ * @param currentHeight Pointer to the current height in the matrix
+ * @param notProcessing Pointer to show if user has finish processing
+ * with the opponents map.
+ */
 static void insertIntoOpponentsMap(uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH],
                                    char returnedChar, uint8_t *currentWidth,
                                    uint8_t *currentHeight, bool *notProcessing)
@@ -70,8 +80,15 @@ static void insertIntoOpponentsMap(uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH],
     }
 }
 
-/* Will block until both players have pressed the NAVSWITCH_PUSH button.
-   Will return true if user pressed first otherwise it will return false*/
+/**
+ * Will block until both players have pressed the NAVSWITCH_PUSH button.
+ * @param usersMap Contains the users battleship layout '0' for empty terrain
+ * '1' for border and '2' for users ship
+ * @param opponentsMap Empty opponentsMap matrix that will be populated when
+ * user sends their battleship layout
+ * @return Will return true if user pressed first otherwise it will return false
+ */
+
 bool waitForBothPlayers(uint8_t usersMap[MAP_HEIGHT][MAP_WIDTH],
                         uint8_t opponentsMap[MAP_HEIGHT][MAP_WIDTH])
 {
@@ -138,9 +155,9 @@ bool waitForBothPlayers(uint8_t usersMap[MAP_HEIGHT][MAP_WIDTH],
     return 1;
 }
 
-/* Call this after user has finished their round.
-   Will notify the opponent that their turn has finished
-*/
+/** Call this after user has finished their round.
+ *  Will notify the opponent that their turn has finished
+ */
 void userDoneWithRound(void)
 {
     ir_uart_putc(DONE_MESSAGE);
