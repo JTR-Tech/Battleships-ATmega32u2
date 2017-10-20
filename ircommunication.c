@@ -166,6 +166,8 @@ void userDoneWithRound(void)
 /*
     Checks to see if the user has finished with their round
     Call this function while user is currently waiting for their round
+
+    @return Will return true if user is done with round, false otherwise
 */
 bool isUserDoneWithRound(void)
 {
